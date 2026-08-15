@@ -18,8 +18,14 @@ set(FREEPROFILE_SRCS
   app.h
   handler.cc
   handler.h
+  message_handler.cc
+  message_handler.h
+  profile_manager.cc
+  profile_manager.h
   render_handler.cc
   render_handler.h
+  render_process_handler.cc
+  render_process_handler.h
 )
 
 if(OS_WINDOWS)
@@ -40,6 +46,10 @@ target_link_libraries(freeprofile-browser libcef_dll_wrapper cef_libcef ${CEF_ST
 if(OS_LINUX OR OS_WINDOWS)
   COPY_FILES(freeprofile-browser "${CEF_BINARY_FILES}" "${CEF_ROOT}/Release" "${CEF_TARGET_OUT_DIR}")
   COPY_FILES(freeprofile-browser "${CEF_RESOURCE_FILES}" "${CEF_ROOT}/Resources" "${CEF_TARGET_OUT_DIR}")
+  add_custom_command(TARGET freeprofile-browser POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/ui"
+    "${CEF_TARGET_OUT_DIR}/ui")
 endif()
 
 if(OS_WINDOWS)

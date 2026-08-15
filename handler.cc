@@ -8,12 +8,15 @@
 
 #include "include/base/cef_callback.h"
 #include "include/cef_app.h"
+#include "include/cef_browser.h"
 #include "include/cef_command_line.h"
 #include "include/cef_parser.h"
 #include "include/views/cef_browser_view.h"
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_closure_task.h"
 #include "include/wrapper/cef_helpers.h"
+#include "message_handler.h"
+#include "profile_manager.h"
 
 namespace {
 
@@ -33,7 +36,6 @@ bool ParseProxy(const std::string& proxy_url,
                 std::string* host,
                 int* port) {
   if (proxy_url.empty()) return false;
-  // CefURLParts makes this easier.
   CefURLParts parts;
   if (!CefParseURL(proxy_url, parts)) return false;
   if (scheme) *scheme = CefString(&parts.scheme).ToString();
@@ -50,10 +52,15 @@ bool ParseProxy(const std::string& proxy_url,
 
 }  // namespace
 
-SimpleHandler::SimpleHandler(bool is_alloy_style)
-    : is_alloy_style_(is_alloy_style) {
+SimpleHandler::SimpleHandler(bool is_alloy_style,
+                             ProfileManager* profile_manager)
+    : is_alloy_style_(is_alloy_style), profile_manager_(profile_manager) {
   DCHECK(!g_instance);
   g_instance = this;
+
+  CefMessageRouterConfig config;
+  message_router_ = CefMessageRouterBrowserSide::Create(config);
+  message_router_->AddHandler(new MessageHandler(profile_manager_), false);
 }
 
 SimpleHandler::~SimpleHandler() { g_instance = nullptr; }
@@ -88,6 +95,7 @@ bool SimpleHandler::DoClose(CefRefPtr<CefBrowser> browser) {
 
 void SimpleHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser) {
   CEF_REQUIRE_UI_THREAD();
+  message_router_->OnBeforeClose(browser);
   BrowserList::iterator bit = browser_list_.begin();
   for (; bit != browser_list_.end(); ++bit) {
     if ((*bit)->IsSame(browser)) {
@@ -145,6 +153,15 @@ void SimpleHandler::SetRenderHandler(CefRefPtr<CefRenderHandler> handler,
   osr_handler_ = osr_handler;
 }
 
+bool SimpleHandler::OnProcessMessageReceived(
+    CefRefPtr<CefBrowser> browser,
+    CefRefPtr<CefFrame> frame,
+    CefProcessId source_process,
+    CefRefPtr<CefProcessMessage> message) {
+  return message_router_->OnProcessMessageReceived(browser, frame, source_process,
+                                                   message);
+}
+
 CefRefPtr<CefResourceRequestHandler> SimpleHandler::GetResourceRequestHandler(
     CefRefPtr<CefBrowser> browser,
     CefRefPtr<CefFrame> frame,
@@ -178,6 +195,22 @@ bool SimpleHandler::GetAuthCredentials(CefRefPtr<CefBrowser> browser,
   return false;
 }
 
+bool SimpleHandler::OnBeforeBrowse(CefRefPtr<CefBrowser> browser,
+                                   CefRefPtr<CefFrame> frame,
+                                   CefRefPtr<CefRequest> request,
+                                   bool user_gesture,
+                                   bool is_redirect) {
+  message_router_->OnBeforeBrowse(browser, frame);
+  return false;
+}
+
+void SimpleHandler::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser,
+                                              TerminationStatus status,
+                                              int error_code,
+                                              const CefString& error_string) {
+  message_router_->OnRenderProcessTerminated(browser);
+}
+
 void SimpleHandler::ShowMainWindow() {
   if (!CefCurrentlyOn(TID_UI)) {
     CefPostTask(TID_UI, base::BindOnce(&SimpleHandler::ShowMainWindow, this));
@@ -193,6 +226,15 @@ void SimpleHandler::ShowMainWindow() {
     }
   } else if (is_alloy_style_) {
     PlatformShowWindow(main_browser);
+  }
+}
+
+void SimpleHandler::TriggerRepaint(CefRefPtr<CefBrowser> browser) {
+  CEF_REQUIRE_UI_THREAD();
+  if (osr_handler_ && browser->GetHost()->IsWindowRenderingDisabled()) {
+    osr_handler_->SetSaveNext(true);
+    browser->GetHost()->WasResized();
+    browser->GetHost()->Invalidate(PET_VIEW);
   }
 }
 

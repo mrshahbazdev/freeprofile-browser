@@ -6,10 +6,11 @@
 
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
+#include "include/cef_path_util.h"
 #include "include/views/cef_browser_view.h"
 #include "include/views/cef_window.h"
 #include "include/wrapper/cef_helpers.h"
-#include "handler.h"
+#include "profile_manager.h"
 #include "render_handler.h"
 
 namespace {
@@ -87,28 +88,56 @@ class SimpleBrowserViewDelegate : public CefBrowserViewDelegate {
   IMPLEMENT_REFCOUNTING(SimpleBrowserViewDelegate);
 };
 
+std::string GetUIUrl(const std::string& page) {
+  CefString exe_dir;
+  if (!CefGetPath(PK_DIR_EXE, exe_dir)) {
+    return "about:blank";
+  }
+  std::string path = exe_dir.ToString() + "/ui/" + page;
+  return "file://" + path;
+}
+
 }  // namespace
 
-SimpleApp::SimpleApp() = default;
+SimpleApp::SimpleApp(const std::string& data_dir, bool is_alloy_style)
+    : data_dir_(data_dir), is_alloy_style_(is_alloy_style) {
+  render_process_handler_ = new SimpleRenderProcessHandler;
+}
+
+CefRefPtr<CefRenderProcessHandler> SimpleApp::GetRenderProcessHandler() {
+  return render_process_handler_;
+}
+
+void SimpleApp::EnsureHandler() {
+  if (!profile_manager_) {
+    profile_manager_.reset(new ProfileManager(data_dir_));
+    profile_manager_->Load();
+  }
+  if (!default_handler_) {
+    default_handler_ = new SimpleHandler(is_alloy_style_, profile_manager_.get());
+  }
+}
 
 void SimpleApp::OnContextInitialized() {
   CEF_REQUIRE_UI_THREAD();
+
+  EnsureHandler();
 
   CefRefPtr<CefCommandLine> command_line =
       CefCommandLine::GetGlobalCommandLine();
 
   cef_runtime_style_t runtime_style = CEF_RUNTIME_STYLE_DEFAULT;
-  if (command_line->HasSwitch("use-alloy-style")) {
+  if (is_alloy_style_) {
     runtime_style = CEF_RUNTIME_STYLE_ALLOY;
   }
 
-  CefRefPtr<SimpleHandler> handler(new SimpleHandler(runtime_style == CEF_RUNTIME_STYLE_ALLOY));
+  CefRefPtr<SimpleHandler> handler = default_handler_;
 
   CefBrowserSettings browser_settings;
 
   std::string url = command_line->GetSwitchValue("url").ToString();
   if (url.empty()) {
-    url = "https://www.google.com";
+    url = GetUIUrl("index.html");
   }
 
   const bool use_views = !command_line->HasSwitch("use-native") &&
@@ -141,5 +170,6 @@ void SimpleApp::OnContextInitialized() {
 }
 
 CefRefPtr<CefClient> SimpleApp::GetDefaultClient() {
-  return SimpleHandler::GetInstance();
+  EnsureHandler();
+  return default_handler_;
 }

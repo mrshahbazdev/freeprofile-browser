@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeProfile Browser - Profiles</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Profiles</h2>
+    <form id="profileForm" class="profile-form">
+      <input id="pName" placeholder="Profile name" required>
+      <input id="pProxy" placeholder="Proxy e.g. http://user:pass@host:port">
+      <input id="pUA" placeholder="User-Agent">
+      <input id="pUrl" placeholder="Start URL" value="https://www.google.com">
+      <button type="submit">Add Profile</button>
+    </form>
+    <ul id="profileList"></ul>
+  </div>
+  <script src="app.js"></script>
+  <script>initDashboard();</script>
+</body>
+</html>

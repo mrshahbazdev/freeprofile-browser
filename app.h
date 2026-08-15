@@ -3,22 +3,38 @@
 #ifndef FREEPROFILE_BROWSER_APP_H_
 #define FREEPROFILE_BROWSER_APP_H_
 
-#include "include/cef_app.h"
+#include <memory>
+#include <string>
 
-class SimpleApp : public CefApp, public CefBrowserProcessHandler {
+#include "include/cef_app.h"
+#include "handler.h"
+#include "profile_manager.h"
+#include "render_process_handler.h"
+
+class SimpleApp : public CefApp,
+                  public CefBrowserProcessHandler {
  public:
-  SimpleApp();
+  SimpleApp(const std::string& data_dir, bool is_alloy_style);
 
   // CefApp methods:
   CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
     return this;
   }
+  CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override;
 
   // CefBrowserProcessHandler methods:
   void OnContextInitialized() override;
   CefRefPtr<CefClient> GetDefaultClient() override;
 
  private:
+  void EnsureHandler();
+
+  const std::string data_dir_;
+  const bool is_alloy_style_;
+  std::unique_ptr<ProfileManager> profile_manager_;
+  CefRefPtr<SimpleHandler> default_handler_;
+  CefRefPtr<SimpleRenderProcessHandler> render_process_handler_;
+
   IMPLEMENT_REFCOUNTING(SimpleApp);
 };
 
