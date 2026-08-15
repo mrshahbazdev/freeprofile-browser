@@ -7,12 +7,16 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="login-box">
-    <h1>FreeProfile Browser</h1>
-    <input type="text" id="username" placeholder="Username" value="admin">
-    <input type="password" id="password" placeholder="Password" value="admin">
-    <button id="loginBtn">Login</button>
-    <p id="error" class="error"></p>
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="logo">FP</div>
+      <h1>FreeProfile Browser</h1>
+      <p>Sign in to your multi-profile workspace</p>
+      <input type="text" id="username" placeholder="Username" value="admin">
+      <input type="password" id="password" placeholder="Password" value="admin">
+      <button id="loginBtn" style="width:100%; margin-top: 8px;">Sign In</button>
+      <p id="error" class="error"></p>
+    </div>
   </div>
   <script src="app.js"></script>
   <script>initLogin();</script>

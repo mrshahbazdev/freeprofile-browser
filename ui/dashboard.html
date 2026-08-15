@@ -7,57 +7,168 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h2>Profiles</h2>
-    <form id="profileForm" class="profile-form">
-      <div class="row">
-        <input id="pName" placeholder="Profile name" required>
-        <select id="pOS">
-          <option value="Windows" selected>Windows 10</option>
-          <option value="macOS">macOS</option>
-          <option value="Linux">Linux</option>
-          <option value="Android">Android</option>
-          <option value="iOS">iOS</option>
-        </select>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">FP</div>
+        <div>
+          <div class="brand-title">FreeProfile</div>
+          <div class="brand-sub">Anti-detect browser</div>
+        </div>
       </div>
-      <div class="row">
-        <input id="pProxy" placeholder="Proxy e.g. http://user:pass@host:port">
-        <input id="pUA" placeholder="User-Agent (leave empty for OS default)">
-      </div>
-      <div class="row">
-        <input id="pTimezone" placeholder="Timezone e.g. America/New_York" value="America/New_York">
-        <input id="pLanguage" placeholder="Language e.g. en-US" value="en-US">
-      </div>
-      <div class="row">
-        <input id="pScreenWidth" type="number" placeholder="Screen width" value="1920">
-        <input id="pScreenHeight" type="number" placeholder="Screen height" value="1080">
-      </div>
-      <div class="row">
-        <input id="pDeviceMemory" type="number" placeholder="Device memory (GB)" value="8">
-        <input id="pUrl" placeholder="Start URL" value="https://www.google.com">
-      </div>
-      <div class="row">
-        <input id="pLatitude" type="number" step="any" placeholder="Latitude" value="40.7128">
-        <input id="pLongitude" type="number" step="any" placeholder="Longitude" value="-74.0060">
-      </div>
-      <div class="row">
-        <input id="pAccuracy" type="number" step="any" placeholder="GPS accuracy (m)" value="10">
-      </div>
-      <div class="row checks">
-        <label><input id="pCanvasNoise" type="checkbox"> Canvas noise</label>
-        <label><input id="pWebglNoise" type="checkbox" checked> WebGL spoof</label>
-        <label><input id="pDisableWebrtc" type="checkbox" checked> Disable WebRTC</label>
-        <label><input id="pEnableGeolocation" type="checkbox" checked> Spoof geolocation</label>
-        <label><input id="pChromeSpoof" type="checkbox" checked> Chrome object</label>
-      </div>
-      <div class="row">
-        <input id="pWebglVendor" placeholder="WebGL vendor" value="Google Inc. (NVIDIA)">
-        <input id="pWebglRenderer" placeholder="WebGL renderer" value="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)">
-      </div>
-      <button type="submit">Add Profile</button>
-    </form>
-    <ul id="profileList"></ul>
+      <nav>
+        <div class="nav-item active"><span class="icon">&#128188;</span><span>Profiles</span></div>
+        <div class="nav-item"><span class="icon">&#128295;</span><span>Settings</span></div>
+        <div class="nav-item"><span class="icon">&#8505;</span><span>Help</span></div>
+      </nav>
+      <div class="sidebar-bottom">v1.0.0 &middot; CEF</div>
+    </aside>
+
+    <main class="main">
+      <header class="header">
+        <h2>Profiles</h2>
+        <div class="header-actions">
+          <input type="text" class="search" id="searchInput" placeholder="Search profiles...">
+          <button id="newProfileBtn">+ New Profile</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="toolbar">
+          <div class="count" id="profileCount">0 profiles</div>
+        </div>
+        <div id="profilesGrid" class="profiles-grid">
+          <div class="empty" id="emptyState">
+            <div class="big">&#128188;</div>
+            <div>No profiles yet. Create one to get started.</div>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
+
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal-panel" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 id="modalTitle">New Profile</h3>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs">
+          <div class="tab active" data-tab="general">General</div>
+          <div class="tab" data-tab="fingerprint">Fingerprint</div>
+          <div class="tab" data-tab="network">Network</div>
+        </div>
+
+        <form id="profileForm">
+          <div class="tab-content active" data-tab="general">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Profile name</label>
+                <input id="pName" placeholder="e.g. Paris Mac" required>
+              </div>
+              <div class="form-group">
+                <label>Operating system</label>
+                <select id="pOS">
+                  <option value="Windows" selected>Windows 10</option>
+                  <option value="macOS">macOS</option>
+                  <option value="Linux">Linux</option>
+                  <option value="Android">Android</option>
+                  <option value="iOS">iOS</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Start URL</label>
+                <input id="pUrl" value="https://www.google.com">
+              </div>
+              <div class="form-group">
+                <label>Language</label>
+                <input id="pLanguage" value="en-US">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Timezone</label>
+                <input id="pTimezone" value="America/New_York">
+              </div>
+              <div class="form-group">
+                <label>Device memory (GB)</label>
+                <input id="pDeviceMemory" type="number" value="8">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Screen width</label>
+                <input id="pScreenWidth" type="number" value="1920">
+              </div>
+              <div class="form-group">
+                <label>Screen height</label>
+                <input id="pScreenHeight" type="number" value="1080">
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="fingerprint">
+            <div class="form-row">
+              <div class="form-group">
+                <label>WebGL vendor</label>
+                <input id="pWebglVendor" value="Google Inc. (NVIDIA)">
+              </div>
+              <div class="form-group">
+                <label>WebGL renderer</label>
+                <input id="pWebglRenderer" value="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Latitude</label>
+                <input id="pLatitude" type="number" step="any" value="40.7128">
+              </div>
+              <div class="form-group">
+                <label>Longitude</label>
+                <input id="pLongitude" type="number" step="any" value="-74.0060">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>GPS accuracy (m)</label>
+                <input id="pAccuracy" type="number" step="any" value="10">
+              </div>
+            </div>
+            <div class="toggle-row">
+              <label class="toggle"><input id="pCanvasNoise" type="checkbox"> Canvas noise</label>
+              <label class="toggle"><input id="pWebglNoise" type="checkbox" checked> WebGL spoof</label>
+              <label class="toggle"><input id="pDisableWebrtc" type="checkbox" checked> Disable WebRTC</label>
+              <label class="toggle"><input id="pEnableGeolocation" type="checkbox" checked> Spoof geolocation</label>
+              <label class="toggle"><input id="pChromeSpoof" type="checkbox" checked> Chrome object</label>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="network">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Proxy</label>
+                <input id="pProxy" placeholder="http://user:pass@host:port or socks5://...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>User-Agent override</label>
+                <input id="pUA" placeholder="Leave empty to use OS default">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="ghost" id="cancelModal" type="button">Cancel</button>
+        <button id="saveProfile" type="button">Save Profile</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>initDashboard();</script>
 </body>
