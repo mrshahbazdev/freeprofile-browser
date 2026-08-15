@@ -80,9 +80,12 @@ button:hover {
 }
 
 .profile-form .row.checks {
-  justify-content: space-between;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
   padding: 8px 0;
+  gap: 12px;
 }
 
 .profile-form .row.checks label {
@@ -91,7 +94,8 @@ button:hover {
   gap: 6px;
   font-size: 13px;
   color: #b0b4bb;
-  flex: 1;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .profile-form .row.checks input {

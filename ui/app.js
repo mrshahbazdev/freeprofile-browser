@@ -57,7 +57,13 @@ function setChecked(id, value) {
 }
 
 function profileSummary(p) {
-  const parts = [p.proxy || 'no proxy', p.userAgent ? 'custom UA' : 'default UA', p.os, `${p.screenWidth}x${p.screenHeight}`];
+  const parts = [
+    p.proxy || 'no proxy',
+    p.userAgent ? 'custom UA' : 'default UA',
+    p.os,
+    `${p.screenWidth}x${p.screenHeight}`,
+    p.enableGeolocation ? `geo ${p.latitude},${p.longitude}` : 'no geo'
+  ];
   return parts.join(' · ');
 }
 
@@ -119,9 +125,15 @@ async function initDashboard() {
       language: val('#pLanguage'),
       screenWidth: parseInt(val('#pScreenWidth')) || 1920,
       screenHeight: parseInt(val('#pScreenHeight')) || 1080,
+      deviceMemoryGb: parseInt(val('#pDeviceMemory')) || 8,
+      latitude: parseFloat(val('#pLatitude')) || 0,
+      longitude: parseFloat(val('#pLongitude')) || 0,
+      accuracy: parseFloat(val('#pAccuracy')) || 10,
       canvasNoise: checked('#pCanvasNoise'),
       webglNoise: checked('#pWebglNoise'),
       disableWebrtc: checked('#pDisableWebrtc'),
+      enableGeolocation: checked('#pEnableGeolocation'),
+      chromeSpoof: checked('#pChromeSpoof'),
       webglVendor: val('#pWebglVendor'),
       webglRenderer: val('#pWebglRenderer')
     };
@@ -131,11 +143,17 @@ async function initDashboard() {
     setVal('#pLanguage', 'en-US');
     setVal('#pScreenWidth', '1920');
     setVal('#pScreenHeight', '1080');
+    setVal('#pDeviceMemory', '8');
+    setVal('#pLatitude', '40.7128');
+    setVal('#pLongitude', '-74.0060');
+    setVal('#pAccuracy', '10');
     setVal('#pUrl', 'https://www.google.com');
     setVal('#pWebglVendor', 'Google Inc. (NVIDIA)');
     setVal('#pWebglRenderer', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)');
     setChecked('#pWebglNoise', true);
     setChecked('#pDisableWebrtc', true);
+    setChecked('#pEnableGeolocation', true);
+    setChecked('#pChromeSpoof', true);
     await refresh();
     setTimeout(() => send('repaint').catch(() => {}), 100);
   };
@@ -155,9 +173,15 @@ async function initDashboard() {
         language: 'en-US',
         screenWidth: 1920,
         screenHeight: 1080,
+        deviceMemoryGb: 8,
+        latitude: 40.7128,
+        longitude: -74.0060,
+        accuracy: 10,
         canvasNoise: false,
         webglNoise: true,
         disableWebrtc: true,
+        enableGeolocation: true,
+        chromeSpoof: true,
         webglVendor: 'Google Inc. (NVIDIA)',
         webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)'
       });

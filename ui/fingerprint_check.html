@@ -5,7 +5,8 @@
   <title>Fingerprint Check</title>
   <style>
     body { background:#0f1115; color:#e6e8ec; font-family: sans-serif; padding: 24px; }
-    pre { background:#1b1e24; padding:12px; border-radius:8px; white-space:pre-wrap; }
+    body { font-size: 12px; }
+    pre { background:#1b1e24; padding:10px; border-radius:8px; white-space:pre-wrap; font-size: 11px; line-height: 1.3; }
   </style>
 </head>
 <body>
@@ -13,6 +14,7 @@
   <pre id="out"></pre>
   <script>
     const gl = document.createElement('canvas').getContext('webgl');
+    const fontCheck = document.fonts && document.fonts.check ? document.fonts.check('Arial') : 'n/a';
     const data = {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -20,8 +22,14 @@
       languages: navigator.languages,
       hardwareConcurrency: navigator.hardwareConcurrency,
       maxTouchPoints: navigator.maxTouchPoints,
+      deviceMemory: navigator.deviceMemory,
+      vendor: navigator.vendor,
+      product: navigator.product,
+      productSub: navigator.productSub,
       webdriver: navigator.webdriver,
       plugins: typeof navigator.plugins === 'object' ? navigator.plugins.length : 'none',
+      fontsCount: document.fonts && document.fonts.size ? document.fonts.size : 'n/a',
+      fontsHasArial: fontCheck,
       screen: {
         width: screen.width,
         height: screen.height,
@@ -31,13 +39,38 @@
         pixelDepth: screen.pixelDepth
       },
       devicePixelRatio: window.devicePixelRatio,
+      outerWidth: window.outerWidth,
+      outerHeight: window.outerHeight,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      userAgentData: navigator.userAgentData ? navigator.userAgentData.toJSON() : 'n/a',
       mediaDevices: typeof navigator.mediaDevices,
       RTCPeerConnection: typeof RTCPeerConnection,
+      geolocation: typeof navigator.geolocation,
+      connection: navigator.connection ? { effectiveType: navigator.connection.effectiveType, downlink: navigator.connection.downlink, rtt: navigator.connection.rtt, type: navigator.connection.type } : 'n/a',
+      chrome: typeof window.chrome,
+      chromeCsi: typeof window.chrome !== 'undefined' && window.chrome.csi ? 'function' : 'n/a',
+      permissions: typeof navigator.permissions,
+      notification: typeof Notification !== 'undefined' ? Notification.permission : 'n/a',
+      performanceMemory: typeof performance !== 'undefined' && performance.memory ? performance.memory.jsHeapSizeLimit : 'n/a',
       webglVendor: gl ? gl.getParameter(0x9245) : 'n/a',
       webglRenderer: gl ? gl.getParameter(0x9246) : 'n/a'
     };
-    document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        data.geoCoords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        };
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      }, () => {
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      });
+    } else {
+      document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+    }
   </script>
 </body>
 </html>

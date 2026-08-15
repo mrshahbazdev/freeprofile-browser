@@ -33,12 +33,22 @@
         <input id="pScreenHeight" type="number" placeholder="Screen height" value="1080">
       </div>
       <div class="row">
+        <input id="pDeviceMemory" type="number" placeholder="Device memory (GB)" value="8">
         <input id="pUrl" placeholder="Start URL" value="https://www.google.com">
+      </div>
+      <div class="row">
+        <input id="pLatitude" type="number" step="any" placeholder="Latitude" value="40.7128">
+        <input id="pLongitude" type="number" step="any" placeholder="Longitude" value="-74.0060">
+      </div>
+      <div class="row">
+        <input id="pAccuracy" type="number" step="any" placeholder="GPS accuracy (m)" value="10">
       </div>
       <div class="row checks">
         <label><input id="pCanvasNoise" type="checkbox"> Canvas noise</label>
         <label><input id="pWebglNoise" type="checkbox" checked> WebGL spoof</label>
         <label><input id="pDisableWebrtc" type="checkbox" checked> Disable WebRTC</label>
+        <label><input id="pEnableGeolocation" type="checkbox" checked> Spoof geolocation</label>
+        <label><input id="pChromeSpoof" type="checkbox" checked> Chrome object</label>
       </div>
       <div class="row">
         <input id="pWebglVendor" placeholder="WebGL vendor" value="Google Inc. (NVIDIA)">

@@ -124,6 +124,12 @@ void PropagateFingerprintSwitches(CefRefPtr<CefCommandLine> from,
       "fp-webgl-vendor",
       "fp-webgl-renderer",
       "fp-disable-webrtc",
+      "fp-enable-geolocation",
+      "fp-chrome-spoof",
+      "fp-device-memory",
+      "fp-latitude",
+      "fp-longitude",
+      "fp-accuracy",
       "user-agent",
   };
   for (const char* sw : kSwitches) {

@@ -23,6 +23,12 @@ struct Profile {
   bool canvas_noise = false;
   bool webgl_noise = false;
   bool disable_webrtc = true;
+  bool enable_geolocation = false;
+  bool chrome_spoof = true;
+  int device_memory_gb = 8;
+  double latitude = 40.7128;
+  double longitude = -74.0060;
+  double accuracy = 10.0;
   std::string webgl_vendor = "Google Inc. (NVIDIA)";
   std::string webgl_renderer = "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)";
 };

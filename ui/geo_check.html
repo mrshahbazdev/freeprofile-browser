@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Geo</title><style>body{color:#fff;background:#0f1115;padding:24px;font-size:32px}</style></head>
+<body><pre id="out">waiting...</pre><script>
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    document.getElementById('out').textContent = 'lat=' + pos.coords.latitude + '\nlon=' + pos.coords.longitude + '\nacc=' + pos.coords.accuracy;
+  }, err => {
+    document.getElementById('out').textContent = 'error: ' + err.message;
+  });
+} else {
+  document.getElementById('out').textContent = 'geolocation unavailable';
+}
+</script></body></html>

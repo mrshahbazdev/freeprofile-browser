@@ -24,6 +24,16 @@ void ReadProfileFromDict(CefRefPtr<CefDictionaryValue> item, Profile* p) {
   p->canvas_noise = item->GetBool("canvasNoise");
   p->webgl_noise = item->GetBool("webglNoise");
   p->disable_webrtc = item->GetBool("disableWebrtc");
+  p->enable_geolocation = item->GetBool("enableGeolocation");
+  p->chrome_spoof = item->HasKey("chromeSpoof") ? item->GetBool("chromeSpoof") : true;
+  int device_memory = item->GetInt("deviceMemoryGb");
+  p->device_memory_gb = device_memory > 0 ? device_memory : 8;
+  double lat = item->GetDouble("latitude");
+  double lon = item->GetDouble("longitude");
+  double acc = item->GetDouble("accuracy");
+  p->latitude = lat != 0.0 ? lat : 40.7128;
+  p->longitude = lon != 0.0 ? lon : -74.0060;
+  p->accuracy = acc != 0.0 ? acc : 10.0;
   p->webgl_vendor = item->GetString("webglVendor").ToString();
   p->webgl_renderer = item->GetString("webglRenderer").ToString();
 }
@@ -43,6 +53,12 @@ CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
   item->SetBool("canvasNoise", p.canvas_noise);
   item->SetBool("webglNoise", p.webgl_noise);
   item->SetBool("disableWebrtc", p.disable_webrtc);
+  item->SetBool("enableGeolocation", p.enable_geolocation);
+  item->SetBool("chromeSpoof", p.chrome_spoof);
+  item->SetInt("deviceMemoryGb", p.device_memory_gb);
+  item->SetDouble("latitude", p.latitude);
+  item->SetDouble("longitude", p.longitude);
+  item->SetDouble("accuracy", p.accuracy);
   item->SetString("webglVendor", p.webgl_vendor);
   item->SetString("webglRenderer", p.webgl_renderer);
   return item;

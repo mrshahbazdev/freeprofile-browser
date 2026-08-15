@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chrome</title><style>body{color:#fff;background:#0f1115;padding:24px;font-size:32px}</style></head><body><pre id="out"></pre><script>
+const data = {
+  chrome: typeof window.chrome,
+  csi: typeof window.chrome !== 'undefined' && window.chrome.csi ? 'function' : 'n/a',
+  loadTimes: typeof window.chrome !== 'undefined' && window.chrome.loadTimes ? 'function' : 'n/a',
+  app: typeof window.chrome !== 'undefined' && window.chrome.app ? 'object' : 'n/a',
+  runtime: typeof window.chrome !== 'undefined' && window.chrome.runtime ? 'object' : 'n/a'
+};
+document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+</script></body></html>

@@ -45,6 +45,19 @@ std::string GetSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
   return v.ToString();
 }
 
+double GetDoubleSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
+                        double fallback) {
+  CefString v = cmd->GetSwitchValue(name);
+  if (v.empty()) return fallback;
+  std::string s = v.ToString();
+  double out = fallback;
+  auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), out);
+  if (ec != std::errc() || ptr != s.data() + s.size()) {
+    return fallback;
+  }
+  return out;
+}
+
 int GetIntSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
                  int fallback) {
   CefString v = cmd->GetSwitchValue(name);
@@ -145,6 +158,12 @@ void SimpleRenderProcessHandler::InjectFingerprint(
   std::string webgl_vendor = GetSwitch(cmd, "fp-webgl-vendor", "Google Inc. (NVIDIA)");
   std::string webgl_renderer = GetSwitch(cmd, "fp-webgl-renderer", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)");
   std::string profile_id = GetSwitch(cmd, "profile-dir", "default");
+  bool enable_geolocation = GetBoolSwitch(cmd, "fp-enable-geolocation", false);
+  bool chrome_spoof = GetBoolSwitch(cmd, "fp-chrome-spoof", true);
+  int device_memory = GetIntSwitch(cmd, "fp-device-memory", 8);
+  double latitude = GetDoubleSwitch(cmd, "fp-latitude", 40.7128);
+  double longitude = GetDoubleSwitch(cmd, "fp-longitude", -74.0060);
+  double accuracy = GetDoubleSwitch(cmd, "fp-accuracy", 10.0);
 
   std::string script = fingerprint_script_;
   Replace(script, "{{USER_AGENT}}", EscapeJS(user_agent));
@@ -158,6 +177,12 @@ void SimpleRenderProcessHandler::InjectFingerprint(
   Replace(script, "{{WEBGL_VENDOR}}", EscapeJS(webgl_vendor));
   Replace(script, "{{WEBGL_RENDERER}}", EscapeJS(webgl_renderer));
   Replace(script, "{{DISABLE_WEBRTC}}", disable_webrtc ? "true" : "false");
+  Replace(script, "{{ENABLE_GEOLOCATION}}", enable_geolocation ? "true" : "false");
+  Replace(script, "{{CHROME_SPOOF}}", chrome_spoof ? "true" : "false");
+  Replace(script, "{{DEVICE_MEMORY}}", std::to_string(device_memory));
+  Replace(script, "{{LATITUDE}}", std::to_string(latitude));
+  Replace(script, "{{LONGITUDE}}", std::to_string(longitude));
+  Replace(script, "{{ACCURACY}}", std::to_string(accuracy));
   Replace(script, "{{SEED}}", std::to_string(SeedFromString(profile_id)));
 
   CefRefPtr<CefV8Value> retval;

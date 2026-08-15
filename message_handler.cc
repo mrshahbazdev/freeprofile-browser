@@ -43,6 +43,12 @@ std::string ProfilesToJSON(const std::vector<Profile>& profiles) {
     item->SetBool("canvasNoise", p.canvas_noise);
     item->SetBool("webglNoise", p.webgl_noise);
     item->SetBool("disableWebrtc", p.disable_webrtc);
+    item->SetBool("enableGeolocation", p.enable_geolocation);
+    item->SetBool("chromeSpoof", p.chrome_spoof);
+    item->SetInt("deviceMemoryGb", p.device_memory_gb);
+    item->SetDouble("latitude", p.latitude);
+    item->SetDouble("longitude", p.longitude);
+    item->SetDouble("accuracy", p.accuracy);
     item->SetString("webglVendor", p.webgl_vendor);
     item->SetString("webglRenderer", p.webgl_renderer);
     list->SetDictionary(list->GetSize(), item);
@@ -92,6 +98,12 @@ void LaunchChild(const std::string& exe,
   cmd += " --fp-webgl-vendor=\"" + p.webgl_vendor + "\"";
   cmd += " --fp-webgl-renderer=\"" + p.webgl_renderer + "\"";
   cmd += " --fp-disable-webrtc=\"" + std::string(p.disable_webrtc ? "1" : "0") + "\"";
+  cmd += " --fp-enable-geolocation=\"" + std::string(p.enable_geolocation ? "1" : "0") + "\"";
+  cmd += " --fp-chrome-spoof=\"" + std::string(p.chrome_spoof ? "1" : "0") + "\"";
+  cmd += " --fp-device-memory=\"" + std::to_string(p.device_memory_gb) + "\"";
+  cmd += " --fp-latitude=\"" + std::to_string(p.latitude) + "\"";
+  cmd += " --fp-longitude=\"" + std::to_string(p.longitude) + "\"";
+  cmd += " --fp-accuracy=\"" + std::to_string(p.accuracy) + "\"";
 
 #if defined(OS_WIN)
   cmd += " & exit";
@@ -152,6 +164,12 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser,
     p.canvas_noise = data->GetBool("canvasNoise");
     p.webgl_noise = data->GetBool("webglNoise");
     p.disable_webrtc = data->GetBool("disableWebrtc");
+    p.enable_geolocation = data->GetBool("enableGeolocation");
+    p.chrome_spoof = data->GetBool("chromeSpoof");
+    p.device_memory_gb = data->GetInt("deviceMemoryGb");
+    p.latitude = data->GetDouble("latitude");
+    p.longitude = data->GetDouble("longitude");
+    p.accuracy = data->GetDouble("accuracy");
     p.webgl_vendor = data->GetString("webglVendor").ToString();
     p.webgl_renderer = data->GetString("webglRenderer").ToString();
     std::string id = profile_manager_->AddProfile(p);
