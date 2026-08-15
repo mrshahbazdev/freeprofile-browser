@@ -8,6 +8,7 @@ class SimpleRenderProcessHandler : public CefRenderProcessHandler {
  public:
   SimpleRenderProcessHandler();
 
+  void OnWebKitInitialized() override;
   void OnContextCreated(CefRefPtr<CefBrowser> browser,
                         CefRefPtr<CefFrame> frame,
                         CefRefPtr<CefV8Context> context) override;
@@ -20,7 +21,10 @@ class SimpleRenderProcessHandler : public CefRenderProcessHandler {
                                 CefRefPtr<CefProcessMessage> message) override;
 
  private:
+  void InjectFingerprint(CefRefPtr<CefV8Context> context);
+
   CefRefPtr<CefMessageRouterRendererSide> message_router_;
+  std::string fingerprint_script_;
 
   IMPLEMENT_REFCOUNTING(SimpleRenderProcessHandler);
 };

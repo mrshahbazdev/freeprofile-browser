@@ -88,6 +88,12 @@ int main(int argc, char* argv[]) {
       arg_storage.push_back("--proxy-server=" + arg.substr(8));
     } else if (arg.find("--user-agent=") == 0) {
       arg_storage.push_back(arg);
+    } else if (arg.find("--fp-timezone=") == 0) {
+      arg_storage.push_back(arg);
+      arg_storage.push_back("--timezone=" + arg.substr(14));
+    } else if (arg.find("--fp-language=") == 0) {
+      arg_storage.push_back(arg);
+      arg_storage.push_back("--lang=" + arg.substr(14));
     } else {
       arg_storage.push_back(arg);
     }

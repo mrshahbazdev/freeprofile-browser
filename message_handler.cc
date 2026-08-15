@@ -35,6 +35,16 @@ std::string ProfilesToJSON(const std::vector<Profile>& profiles) {
     item->SetString("proxy", p.proxy);
     item->SetString("userAgent", p.user_agent);
     item->SetString("url", p.url);
+    item->SetString("os", p.os);
+    item->SetString("timezone", p.timezone);
+    item->SetString("language", p.language);
+    item->SetInt("screenWidth", p.screen_width);
+    item->SetInt("screenHeight", p.screen_height);
+    item->SetBool("canvasNoise", p.canvas_noise);
+    item->SetBool("webglNoise", p.webgl_noise);
+    item->SetBool("disableWebrtc", p.disable_webrtc);
+    item->SetString("webglVendor", p.webgl_vendor);
+    item->SetString("webglRenderer", p.webgl_renderer);
     list->SetDictionary(list->GetSize(), item);
   }
   CefRefPtr<CefValue> value = CefValue::Create();
@@ -69,6 +79,20 @@ void LaunchChild(const std::string& exe,
     cmd += " --user-agent=\"" + p.user_agent + "\"";
   }
   cmd += " --url=\"" + p.url + "\"";
+
+  cmd += " --fp-os=\"" + p.os + "\"";
+  cmd += " --fp-timezone=\"" + p.timezone + "\"";
+  cmd += " --timezone=\"" + p.timezone + "\"";
+  cmd += " --fp-language=\"" + p.language + "\"";
+  cmd += " --lang=\"" + p.language + "\"";
+  cmd += " --fp-screen-width=\"" + std::to_string(p.screen_width) + "\"";
+  cmd += " --fp-screen-height=\"" + std::to_string(p.screen_height) + "\"";
+  cmd += " --fp-canvas-noise=\"" + std::string(p.canvas_noise ? "1" : "0") + "\"";
+  cmd += " --fp-webgl-noise=\"" + std::string(p.webgl_noise ? "1" : "0") + "\"";
+  cmd += " --fp-webgl-vendor=\"" + p.webgl_vendor + "\"";
+  cmd += " --fp-webgl-renderer=\"" + p.webgl_renderer + "\"";
+  cmd += " --fp-disable-webrtc=\"" + std::string(p.disable_webrtc ? "1" : "0") + "\"";
+
 #if defined(OS_WIN)
   cmd += " & exit";
 #else
@@ -120,6 +144,16 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser,
     p.proxy = data->GetString("proxy").ToString();
     p.user_agent = data->GetString("userAgent").ToString();
     p.url = data->GetString("url").ToString();
+    p.os = data->GetString("os").ToString();
+    p.timezone = data->GetString("timezone").ToString();
+    p.language = data->GetString("language").ToString();
+    p.screen_width = data->GetInt("screenWidth");
+    p.screen_height = data->GetInt("screenHeight");
+    p.canvas_noise = data->GetBool("canvasNoise");
+    p.webgl_noise = data->GetBool("webglNoise");
+    p.disable_webrtc = data->GetBool("disableWebrtc");
+    p.webgl_vendor = data->GetString("webglVendor").ToString();
+    p.webgl_renderer = data->GetString("webglRenderer").ToString();
     std::string id = profile_manager_->AddProfile(p);
     callback->Success(BuildAddProfileResponse(id));
     return true;

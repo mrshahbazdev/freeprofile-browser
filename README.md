@@ -5,6 +5,7 @@ A minimal CEF (Chromium Embedded Framework) browser with per-profile isolation, 
 ## Features
 
 - Built-in login screen + profile manager UI (`ui/`).
+- Per-profile anti-detect fingerprint spoofing: user-agent, platform, screen, timezone, language, plugins, WebGL vendor/renderer, Canvas noise, WebRTC disable.
 - Per-profile isolated cache / cookies / storage (each process uses its own `cache_path`).
 - Proxy support per profile (`http://user:pass@host:port` or `socks5://...`).
 - Custom user-agent per profile.
@@ -20,8 +21,8 @@ A minimal CEF (Chromium Embedded Framework) browser with per-profile isolation, 
 - `message_handler.h` / `message_handler.cc` — CEF message-router handler for JS-to-C++ queries.
 - `profile_manager.h` / `profile_manager.cc` — profile persistence (JSON on disk).
 - `render_handler.h` / `render_handler.cc` — off-screen render handler.
-- `render_process_handler.h` / `render_process_handler.cc` — renderer-side message router setup.
-- `ui/` — HTML/CSS/JS login and profile manager interface.
+- `render_process_handler.h` / `render_process_handler.cc` — renderer-side message router and fingerprint injection.
+- `ui/` — HTML/CSS/JS login, profile manager, and fingerprint check pages.
 - `CMakeLists.txt` — build configuration.
 
 ## Build requirements

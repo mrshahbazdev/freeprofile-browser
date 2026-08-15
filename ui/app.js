@@ -36,6 +36,37 @@ function initLogin() {
   }
 }
 
+function val(id) {
+  const el = qs(id);
+  return el ? el.value.trim() : '';
+}
+
+function checked(id) {
+  const el = qs(id);
+  return el ? el.checked : false;
+}
+
+function setVal(id, value) {
+  const el = qs(id);
+  if (el) el.value = value;
+}
+
+function setChecked(id, value) {
+  const el = qs(id);
+  if (el) el.checked = value;
+}
+
+function profileSummary(p) {
+  const parts = [p.proxy || 'no proxy', p.userAgent ? 'custom UA' : 'default UA', p.os, `${p.screenWidth}x${p.screenHeight}`];
+  return parts.join(' · ');
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
 async function initDashboard() {
   const profileList = qs('#profileList');
   const form = qs('#profileForm');
@@ -50,7 +81,8 @@ async function initDashboard() {
       li.innerHTML = `
         <div class="info">
           <div class="name">${escapeHtml(p.name)}</div>
-          <div class="meta">${p.proxy || 'no proxy'} · ${p.userAgent ? 'custom UA' : 'default UA'} · ${escapeHtml(p.url || '')}</div>
+          <div class="meta">${escapeHtml(profileSummary(p))}</div>
+          <div class="meta">${escapeHtml(p.url || '')} · ${escapeHtml(p.timezone || '')} · ${p.disableWebrtc ? 'WebRTC off' : 'WebRTC on'}</div>
         </div>
         <div class="actions">
           <button class="small" data-id="${p.id}" data-action="launch">Launch</button>
@@ -65,35 +97,47 @@ async function initDashboard() {
     const btn = e.target.closest('button');
     if (!btn) return;
     const id = btn.dataset.id;
-    try {
-      if (btn.dataset.action === 'delete') {
-        await send('deleteProfile', { id });
-        await refresh();
-      } else if (btn.dataset.action === 'launch') {
-        await send('launchProfile', { id });
-      }
-    } catch (err) {
-      alert(err);
+    const action = btn.dataset.action;
+    if (action === 'delete') {
+      await send('deleteProfile', { id });
+      await refresh();
+      setTimeout(() => send('repaint').catch(() => {}), 100);
+    } else if (action === 'launch') {
+      await send('launchProfile', { id });
     }
   };
 
   form.onsubmit = async (e) => {
     e.preventDefault();
     const data = {
-      name: qs('#pName').value.trim(),
-      proxy: qs('#pProxy').value.trim(),
-      userAgent: qs('#pUA').value.trim(),
-      url: qs('#pUrl').value.trim() || 'https://www.google.com'
+      name: val('#pName'),
+      proxy: val('#pProxy'),
+      userAgent: val('#pUA'),
+      url: val('#pUrl') || 'https://www.google.com',
+      os: val('#pOS'),
+      timezone: val('#pTimezone'),
+      language: val('#pLanguage'),
+      screenWidth: parseInt(val('#pScreenWidth')) || 1920,
+      screenHeight: parseInt(val('#pScreenHeight')) || 1080,
+      canvasNoise: checked('#pCanvasNoise'),
+      webglNoise: checked('#pWebglNoise'),
+      disableWebrtc: checked('#pDisableWebrtc'),
+      webglVendor: val('#pWebglVendor'),
+      webglRenderer: val('#pWebglRenderer')
     };
-    if (!data.name) return;
-    try {
-      await send('addProfile', data);
-      form.reset();
-      qs('#pUrl').value = 'https://www.google.com';
-      await refresh();
-    } catch (err) {
-      alert(err);
-    }
+    await send('addProfile', data);
+    form.reset();
+    setVal('#pTimezone', 'America/New_York');
+    setVal('#pLanguage', 'en-US');
+    setVal('#pScreenWidth', '1920');
+    setVal('#pScreenHeight', '1080');
+    setVal('#pUrl', 'https://www.google.com');
+    setVal('#pWebglVendor', 'Google Inc. (NVIDIA)');
+    setVal('#pWebglRenderer', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)');
+    setChecked('#pWebglNoise', true);
+    setChecked('#pDisableWebrtc', true);
+    await refresh();
+    setTimeout(() => send('repaint').catch(() => {}), 100);
   };
 
   await refresh();
@@ -101,7 +145,22 @@ async function initDashboard() {
 
   if (location.search.includes('auto=1')) {
     try {
-      await send('addProfile', { name: 'Demo', proxy: '', userAgent: '', url: 'https://example.com' });
+      await send('addProfile', {
+        name: 'Demo',
+        proxy: '',
+        userAgent: '',
+        url: 'https://example.com',
+        os: 'Windows',
+        timezone: 'America/New_York',
+        language: 'en-US',
+        screenWidth: 1920,
+        screenHeight: 1080,
+        canvasNoise: false,
+        webglNoise: true,
+        disableWebrtc: true,
+        webglVendor: 'Google Inc. (NVIDIA)',
+        webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)'
+      });
       await refresh();
       setTimeout(() => send('repaint').catch(() => {}), 500);
       const first = profileList.querySelector('[data-action="launch"]');
@@ -110,8 +169,4 @@ async function initDashboard() {
       console.error(err);
     }
   }
-}
-
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }

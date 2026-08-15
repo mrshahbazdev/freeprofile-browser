@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fingerprint Check</title>
+  <style>
+    body { background:#0f1115; color:#e6e8ec; font-family: sans-serif; padding: 24px; }
+    pre { background:#1b1e24; padding:12px; border-radius:8px; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>FreeProfile Browser - Fingerprint Check</h2>
+  <pre id="out"></pre>
+  <script>
+    const gl = document.createElement('canvas').getContext('webgl');
+    const data = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      languages: navigator.languages,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      maxTouchPoints: navigator.maxTouchPoints,
+      webdriver: navigator.webdriver,
+      plugins: typeof navigator.plugins === 'object' ? navigator.plugins.length : 'none',
+      screen: {
+        width: screen.width,
+        height: screen.height,
+        availWidth: screen.availWidth,
+        availHeight: screen.availHeight,
+        colorDepth: screen.colorDepth,
+        pixelDepth: screen.pixelDepth
+      },
+      devicePixelRatio: window.devicePixelRatio,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      mediaDevices: typeof navigator.mediaDevices,
+      RTCPeerConnection: typeof RTCPeerConnection,
+      webglVendor: gl ? gl.getParameter(0x9245) : 'n/a',
+      webglRenderer: gl ? gl.getParameter(0x9246) : 'n/a'
+    };
+    document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+  </script>
+</body>
+</html>

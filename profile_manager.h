@@ -13,6 +13,18 @@ struct Profile {
   std::string proxy;
   std::string user_agent;
   std::string url;
+
+  // Anti-detect / fingerprint fields.
+  std::string os = "Windows";
+  std::string timezone = "America/New_York";
+  std::string language = "en-US";
+  int screen_width = 1920;
+  int screen_height = 1080;
+  bool canvas_noise = false;
+  bool webgl_noise = false;
+  bool disable_webrtc = true;
+  std::string webgl_vendor = "Google Inc. (NVIDIA)";
+  std::string webgl_renderer = "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)";
 };
 
 class ProfileManager {
@@ -32,7 +44,6 @@ class ProfileManager {
  private:
   std::string data_dir_;
   std::vector<Profile> profiles_;
-  int next_id_ = 1;
 };
 
 #endif

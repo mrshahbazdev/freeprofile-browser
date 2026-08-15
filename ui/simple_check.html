@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simple</title>
+<style>body{background:#0f1115;color:#fff;padding:24px;}</style>
+</head>
+<body>
+  <h1>Simple Check</h1>
+  <pre id="out"></pre>
+  <script>
+    const data = {
+      injected: !!window.__fp_injected,
+      config: window.__fp_config || null,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+    document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+  </script>
+</body>
+</html>

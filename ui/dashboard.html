@@ -10,10 +10,40 @@
   <div class="container">
     <h2>Profiles</h2>
     <form id="profileForm" class="profile-form">
-      <input id="pName" placeholder="Profile name" required>
-      <input id="pProxy" placeholder="Proxy e.g. http://user:pass@host:port">
-      <input id="pUA" placeholder="User-Agent">
-      <input id="pUrl" placeholder="Start URL" value="https://www.google.com">
+      <div class="row">
+        <input id="pName" placeholder="Profile name" required>
+        <select id="pOS">
+          <option value="Windows" selected>Windows 10</option>
+          <option value="macOS">macOS</option>
+          <option value="Linux">Linux</option>
+          <option value="Android">Android</option>
+          <option value="iOS">iOS</option>
+        </select>
+      </div>
+      <div class="row">
+        <input id="pProxy" placeholder="Proxy e.g. http://user:pass@host:port">
+        <input id="pUA" placeholder="User-Agent (leave empty for OS default)">
+      </div>
+      <div class="row">
+        <input id="pTimezone" placeholder="Timezone e.g. America/New_York" value="America/New_York">
+        <input id="pLanguage" placeholder="Language e.g. en-US" value="en-US">
+      </div>
+      <div class="row">
+        <input id="pScreenWidth" type="number" placeholder="Screen width" value="1920">
+        <input id="pScreenHeight" type="number" placeholder="Screen height" value="1080">
+      </div>
+      <div class="row">
+        <input id="pUrl" placeholder="Start URL" value="https://www.google.com">
+      </div>
+      <div class="row checks">
+        <label><input id="pCanvasNoise" type="checkbox"> Canvas noise</label>
+        <label><input id="pWebglNoise" type="checkbox" checked> WebGL spoof</label>
+        <label><input id="pDisableWebrtc" type="checkbox" checked> Disable WebRTC</label>
+      </div>
+      <div class="row">
+        <input id="pWebglVendor" placeholder="WebGL vendor" value="Google Inc. (NVIDIA)">
+        <input id="pWebglRenderer" placeholder="WebGL renderer" value="ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)">
+      </div>
       <button type="submit">Add Profile</button>
     </form>
     <ul id="profileList"></ul>

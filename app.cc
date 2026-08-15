@@ -3,6 +3,7 @@
 #include "app.h"
 
 #include <string>
+#include <vector>
 
 #include "include/cef_browser.h"
 #include "include/cef_command_line.h"
@@ -106,6 +107,46 @@ SimpleApp::SimpleApp(const std::string& data_dir, bool is_alloy_style)
 
 CefRefPtr<CefRenderProcessHandler> SimpleApp::GetRenderProcessHandler() {
   return render_process_handler_;
+}
+
+namespace {
+
+void PropagateFingerprintSwitches(CefRefPtr<CefCommandLine> from,
+                                   CefRefPtr<CefCommandLine> to) {
+  const std::vector<const char*> kSwitches = {
+      "fp-os",
+      "fp-timezone",
+      "fp-language",
+      "fp-screen-width",
+      "fp-screen-height",
+      "fp-canvas-noise",
+      "fp-webgl-noise",
+      "fp-webgl-vendor",
+      "fp-webgl-renderer",
+      "fp-disable-webrtc",
+      "user-agent",
+  };
+  for (const char* sw : kSwitches) {
+    if (from->HasSwitch(sw)) {
+      std::string value = from->GetSwitchValue(sw).ToString();
+      to->AppendSwitchWithValue(sw, value);
+    }
+  }
+}
+
+}  // namespace
+
+void SimpleApp::OnBeforeCommandLineProcessing(
+    const CefString& process_type,
+    CefRefPtr<CefCommandLine> command_line) {}
+
+void SimpleApp::OnBeforeChildProcessLaunch(
+    CefRefPtr<CefCommandLine> command_line) {
+  CefRefPtr<CefCommandLine> global = CefCommandLine::GetGlobalCommandLine();
+  if (!global) {
+    return;
+  }
+  PropagateFingerprintSwitches(global, command_line);
 }
 
 void SimpleApp::EnsureHandler() {

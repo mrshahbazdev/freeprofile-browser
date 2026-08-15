@@ -7,6 +7,7 @@
 #include <string>
 
 #include "include/cef_app.h"
+#include "include/cef_command_line.h"
 #include "handler.h"
 #include "profile_manager.h"
 #include "render_process_handler.h"
@@ -22,8 +23,15 @@ class SimpleApp : public CefApp,
   }
   CefRefPtr<CefRenderProcessHandler> GetRenderProcessHandler() override;
 
+  // CefApp methods:
+  void OnBeforeCommandLineProcessing(
+      const CefString& process_type,
+      CefRefPtr<CefCommandLine> command_line) override;
+
   // CefBrowserProcessHandler methods:
   void OnContextInitialized() override;
+  void OnBeforeChildProcessLaunch(
+      CefRefPtr<CefCommandLine> command_line) override;
   CefRefPtr<CefClient> GetDefaultClient() override;
 
  private:

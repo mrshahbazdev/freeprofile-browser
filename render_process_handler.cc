@@ -1,8 +1,117 @@
 #include "render_process_handler.h"
 
+#include <charconv>
+#include <fstream>
+#include <sstream>
+
+#include "include/cef_command_line.h"
+#include "include/cef_path_util.h"
+#include "include/cef_v8.h"
+
+namespace {
+
+std::string ReadFile(const std::string& path) {
+  std::ifstream f(path);
+  if (!f.is_open()) return "";
+  std::stringstream ss;
+  ss << f.rdbuf();
+  return ss.str();
+}
+
+std::string EscapeJS(const std::string& s) {
+  std::string out;
+  out.reserve(s.size());
+  for (char c : s) {
+    if (c == '\\' || c == '"') out.push_back('\\');
+    out.push_back(c);
+  }
+  return out;
+}
+
+void Replace(std::string& haystack,
+             const std::string& needle,
+             const std::string& value) {
+  size_t pos = 0;
+  while ((pos = haystack.find(needle, pos)) != std::string::npos) {
+    haystack.replace(pos, needle.size(), value);
+    pos += value.size();
+  }
+}
+
+std::string GetSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
+                      const std::string& fallback) {
+  CefString v = cmd->GetSwitchValue(name);
+  if (v.empty()) return fallback;
+  return v.ToString();
+}
+
+int GetIntSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
+                 int fallback) {
+  CefString v = cmd->GetSwitchValue(name);
+  if (v.empty()) return fallback;
+  std::string s = v.ToString();
+  int out = fallback;
+  auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), out);
+  if (ec != std::errc() || ptr != s.data() + s.size()) {
+    return fallback;
+  }
+  return out;
+}
+
+bool GetBoolSwitch(CefRefPtr<CefCommandLine> cmd, const std::string& name,
+                   bool fallback) {
+  CefString v = cmd->GetSwitchValue(name);
+  if (v.empty()) return fallback;
+  return v.ToString() == "1" || v.ToString() == "true";
+}
+
+std::string PlatformForOS(const std::string& os) {
+  if (os == "macOS") return "MacIntel";
+  if (os == "iOS") return "iPhone";
+  if (os == "Android") return "Linux armv8l";
+  if (os == "Linux") return "Linux x86_64";
+  return "Win32";
+}
+
+std::string DefaultUAForOS(const std::string& os,
+                            const std::string& language) {
+  const std::string chrome = "134.0.0.0";
+  if (os == "macOS") {
+    return "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome + " Safari/537.36";
+  }
+  if (os == "Linux") {
+    return "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome + " Safari/537.36";
+  }
+  if (os == "Android") {
+    return "Mozilla/5.0 (Linux; Android 14; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome + " Mobile Safari/537.36";
+  }
+  if (os == "iOS") {
+    return "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/" + chrome + " Mobile/15E148 Safari/604.1";
+  }
+  return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + chrome + " Safari/537.36";
+}
+
+int SeedFromString(const std::string& s) {
+  int h = 0;
+  for (char c : s) {
+    h = (h * 31 + static_cast<unsigned char>(c)) & 0x7FFFFFFF;
+  }
+  return h;
+}
+
+}  // namespace
+
 SimpleRenderProcessHandler::SimpleRenderProcessHandler() {
   CefMessageRouterConfig config;
   message_router_ = CefMessageRouterRendererSide::Create(config);
+}
+
+void SimpleRenderProcessHandler::OnWebKitInitialized() {
+  CefString exe_dir;
+  if (CefGetPath(PK_DIR_EXE, exe_dir)) {
+    std::string path = exe_dir.ToString() + "/ui/fingerprint.js";
+    fingerprint_script_ = ReadFile(path);
+  }
 }
 
 void SimpleRenderProcessHandler::OnContextCreated(
@@ -10,6 +119,50 @@ void SimpleRenderProcessHandler::OnContextCreated(
     CefRefPtr<CefFrame> frame,
     CefRefPtr<CefV8Context> context) {
   message_router_->OnContextCreated(browser, frame, context);
+
+  InjectFingerprint(context);
+}
+
+void SimpleRenderProcessHandler::InjectFingerprint(
+    CefRefPtr<CefV8Context> context) {
+  if (fingerprint_script_.empty()) {
+    return;
+  }
+
+  CefRefPtr<CefCommandLine> cmd = CefCommandLine::GetGlobalCommandLine();
+  std::string os = GetSwitch(cmd, "fp-os", "Windows");
+  std::string language = GetSwitch(cmd, "fp-language", "en-US");
+  std::string timezone = GetSwitch(cmd, "fp-timezone", "America/New_York");
+  std::string user_agent = GetSwitch(cmd, "user-agent", "");
+  if (user_agent.empty()) {
+    user_agent = DefaultUAForOS(os, language);
+  }
+  int screen_width = GetIntSwitch(cmd, "fp-screen-width", 1920);
+  int screen_height = GetIntSwitch(cmd, "fp-screen-height", 1080);
+  bool canvas_noise = GetBoolSwitch(cmd, "fp-canvas-noise", false);
+  bool webgl_noise = GetBoolSwitch(cmd, "fp-webgl-noise", false);
+  bool disable_webrtc = GetBoolSwitch(cmd, "fp-disable-webrtc", true);
+  std::string webgl_vendor = GetSwitch(cmd, "fp-webgl-vendor", "Google Inc. (NVIDIA)");
+  std::string webgl_renderer = GetSwitch(cmd, "fp-webgl-renderer", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)");
+  std::string profile_id = GetSwitch(cmd, "profile-dir", "default");
+
+  std::string script = fingerprint_script_;
+  Replace(script, "{{USER_AGENT}}", EscapeJS(user_agent));
+  Replace(script, "{{PLATFORM}}", EscapeJS(PlatformForOS(os)));
+  Replace(script, "{{LANGUAGE}}", EscapeJS(language));
+  Replace(script, "{{TIMEZONE}}", EscapeJS(timezone));
+  Replace(script, "{{SCREEN_WIDTH}}", std::to_string(screen_width));
+  Replace(script, "{{SCREEN_HEIGHT}}", std::to_string(screen_height));
+  Replace(script, "{{CANVAS_NOISE}}", canvas_noise ? "true" : "false");
+  Replace(script, "{{WEBGL_NOISE}}", webgl_noise ? "true" : "false");
+  Replace(script, "{{WEBGL_VENDOR}}", EscapeJS(webgl_vendor));
+  Replace(script, "{{WEBGL_RENDERER}}", EscapeJS(webgl_renderer));
+  Replace(script, "{{DISABLE_WEBRTC}}", disable_webrtc ? "true" : "false");
+  Replace(script, "{{SEED}}", std::to_string(SeedFromString(profile_id)));
+
+  CefRefPtr<CefV8Value> retval;
+  CefRefPtr<CefV8Exception> exception;
+  context->Eval(script, "", 0, retval, exception);
 }
 
 void SimpleRenderProcessHandler::OnContextReleased(
