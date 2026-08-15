@@ -1,0 +1,16 @@
+# Build outputs
+build/
+Release/
+Debug/
+*.o
+*.a
+*.so
+*.exe
+*.dll
+*.pdb
+
+# CEF binary distribution
+cef/
+
+# Logs
+*.log
