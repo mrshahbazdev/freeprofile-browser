@@ -96,7 +96,10 @@ function profileCard(p) {
     ? `<span class="badge">WebRTC off</span>`
     : `<span class="badge warn">WebRTC on</span>`;
   const geoBadge = p.enableGeolocation
-    ? `<span class="badge os">geo</span>`
+    ? `<span class="badge accent">geo</span>`
+    : '';
+  const autoBadge = p.automationPort > 0
+    ? `<span class="badge accent">port ${p.automationPort}</span>`
     : '';
   const screen = `${p.screenWidth || 1920} × ${p.screenHeight || 1080}`;
   return `
@@ -109,15 +112,16 @@ function profileCard(p) {
         </div>
       </div>
       <div class="profile-badges">
-        <span class="badge os">${escapeHtml(p.os || 'Windows')}</span>
+        <span class="badge accent">${escapeHtml(p.os || 'Windows')}</span>
         ${proxyBadge}
         <span class="badge dim">${escapeHtml(screen)}</span>
         ${webrtcBadge}
         ${geoBadge}
+        ${autoBadge}
       </div>
       <div class="profile-meta">
-        <div>${escapeHtml(p.timezone || '')} &middot; ${escapeHtml(p.language || 'en-US')}</div>
-        <div>${p.proxy ? escapeHtml(p.proxy) : 'No proxy'} &middot; ${p.enableGeolocation ? `geo ${p.latitude}, ${p.longitude}` : 'no geo'}</div>
+        <div>${escapeHtml(p.timezone || '')} · ${escapeHtml(p.language || 'en-US')}</div>
+        <div>${p.proxy ? escapeHtml(p.proxy) : 'No proxy'} · ${p.enableGeolocation ? `geo ${p.latitude}, ${p.longitude}` : 'no geo'}</div>
       </div>
       <div class="profile-actions">
         <button class="small" data-action="launch" data-id="${p.id}">Launch</button>
@@ -125,6 +129,23 @@ function profileCard(p) {
       </div>
     </div>
   `;
+}
+
+function automationExample(tool, port) {
+  if (!tool || tool === 'none' || !port || port <= 0) {
+    return 'Select an automation tool and port to generate a connection snippet.';
+  }
+  if (tool === 'puppeteer' || tool === 'playwright') {
+    return `const browser = await ${tool}.launch({\n  wsEndpoint: 'ws://127.0.0.1:${port}/devtools/browser/<id>'\n});`;
+  }
+  return `driver = webdriver.Chrome(options)\n# connect to http://127.0.0.1:${port} if using remote-debugging-port with ChromeDriver`;
+}
+
+function updateAutomationExample() {
+  const tool = val('#pAutomationTool');
+  const port = parseInt(val('#pAutomationPort')) || 0;
+  const el = qs('#automationExample');
+  if (el) el.textContent = automationExample(tool, port);
 }
 
 async function initDashboard() {
@@ -163,11 +184,14 @@ async function initDashboard() {
     setVal('#pAccuracy', '10');
     setVal('#pWebglVendor', 'Google Inc. (NVIDIA)');
     setVal('#pWebglRenderer', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)');
+    setVal('#pAutomationPort', '0');
+    setVal('#pAutomationTool', 'none');
     setChecked('#pWebglNoise', true);
     setChecked('#pDisableWebrtc', true);
     setChecked('#pEnableGeolocation', true);
     setChecked('#pChromeSpoof', true);
     setChecked('#pCanvasNoise', false);
+    updateAutomationExample();
   }
 
   function render() {
@@ -234,7 +258,9 @@ async function initDashboard() {
       enableGeolocation: checked('#pEnableGeolocation'),
       chromeSpoof: checked('#pChromeSpoof'),
       webglVendor: val('#pWebglVendor'),
-      webglRenderer: val('#pWebglRenderer')
+      webglRenderer: val('#pWebglRenderer'),
+      automationTool: val('#pAutomationTool'),
+      automationPort: parseInt(val('#pAutomationPort')) || 0
     };
     try {
       await send('addProfile', data);
@@ -253,6 +279,9 @@ async function initDashboard() {
 
   searchInput.oninput = render;
 
+  qs('#pAutomationTool').onchange = updateAutomationExample;
+  qs('#pAutomationPort').oninput = updateAutomationExample;
+
   tabs.forEach(tab => {
     tab.onclick = () => {
       tabs.forEach(t => t.classList.remove('active'));
@@ -261,6 +290,7 @@ async function initDashboard() {
       qsa('.tab-content').forEach(c => {
         c.classList.toggle('active', c.dataset.tab === target);
       });
+      if (target === 'automation') updateAutomationExample();
     };
   });
 
@@ -289,7 +319,9 @@ async function initDashboard() {
         enableGeolocation: true,
         chromeSpoof: true,
         webglVendor: 'Google Inc. (NVIDIA)',
-        webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)'
+        webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)',
+        automationTool: 'none',
+        automationPort: 0
       });
       await refresh();
       setTimeout(() => send('repaint').catch(() => {}), 500);
@@ -301,6 +333,10 @@ async function initDashboard() {
   if (location.search.includes('modal=1')) {
     setTimeout(() => {
       openModal();
+      if (location.search.includes('tab=automation')) {
+        const tab = qs('.tab[data-tab="automation"]');
+        if (tab) tab.click();
+      }
       if (location.search.includes('tab=fingerprint')) {
         const fpTab = qs('.tab[data-tab="fingerprint"]');
         if (fpTab) fpTab.click();

@@ -36,6 +36,9 @@ void ReadProfileFromDict(CefRefPtr<CefDictionaryValue> item, Profile* p) {
   p->accuracy = acc != 0.0 ? acc : 10.0;
   p->webgl_vendor = item->GetString("webglVendor").ToString();
   p->webgl_renderer = item->GetString("webglRenderer").ToString();
+  p->automation_tool = item->GetString("automationTool").ToString();
+  int port = item->GetInt("automationPort");
+  p->automation_port = port >= 0 ? port : 0;
 }
 
 CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
@@ -61,6 +64,8 @@ CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
   item->SetDouble("accuracy", p.accuracy);
   item->SetString("webglVendor", p.webgl_vendor);
   item->SetString("webglRenderer", p.webgl_renderer);
+  item->SetString("automationTool", p.automation_tool);
+  item->SetInt("automationPort", p.automation_port);
   return item;
 }
 

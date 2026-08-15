@@ -51,6 +51,8 @@ std::string ProfilesToJSON(const std::vector<Profile>& profiles) {
     item->SetDouble("accuracy", p.accuracy);
     item->SetString("webglVendor", p.webgl_vendor);
     item->SetString("webglRenderer", p.webgl_renderer);
+    item->SetString("automationTool", p.automation_tool);
+    item->SetInt("automationPort", p.automation_port);
     list->SetDictionary(list->GetSize(), item);
   }
   CefRefPtr<CefValue> value = CefValue::Create();
@@ -104,6 +106,11 @@ void LaunchChild(const std::string& exe,
   cmd += " --fp-latitude=\"" + std::to_string(p.latitude) + "\"";
   cmd += " --fp-longitude=\"" + std::to_string(p.longitude) + "\"";
   cmd += " --fp-accuracy=\"" + std::to_string(p.accuracy) + "\"";
+
+  if (p.automation_port > 0) {
+    cmd += " --remote-debugging-port=" + std::to_string(p.automation_port);
+    cmd += " --remote-allow-origins=*";
+  }
 
 #if defined(OS_WIN)
   cmd += " & exit";
@@ -172,6 +179,8 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser,
     p.accuracy = data->GetDouble("accuracy");
     p.webgl_vendor = data->GetString("webglVendor").ToString();
     p.webgl_renderer = data->GetString("webglRenderer").ToString();
+    p.automation_tool = data->GetString("automationTool").ToString();
+    p.automation_port = data->GetInt("automationPort");
     std::string id = profile_manager_->AddProfile(p);
     callback->Success(BuildAddProfileResponse(id));
     return true;

@@ -31,6 +31,10 @@ struct Profile {
   double accuracy = 10.0;
   std::string webgl_vendor = "Google Inc. (NVIDIA)";
   std::string webgl_renderer = "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)";
+
+  // Automation integration.
+  std::string automation_tool = "none";
+  int automation_port = 0;
 };
 
 class ProfileManager {

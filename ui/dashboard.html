@@ -58,6 +58,7 @@
           <div class="tab active" data-tab="general">General</div>
           <div class="tab" data-tab="fingerprint">Fingerprint</div>
           <div class="tab" data-tab="network">Network</div>
+          <div class="tab" data-tab="automation">Automation</div>
         </div>
 
         <form id="profileForm">
@@ -158,6 +159,28 @@
                 <label>User-Agent override</label>
                 <input id="pUA" placeholder="Leave empty to use OS default">
               </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="automation">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Automation tool</label>
+                <select id="pAutomationTool">
+                  <option value="none" selected>None</option>
+                  <option value="playwright">Playwright (CDP)</option>
+                  <option value="puppeteer">Puppeteer (CDP)</option>
+                  <option value="selenium">Selenium ChromeDriver</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Remote debugging port</label>
+                <input id="pAutomationPort" type="number" value="0" placeholder="e.g. 9222">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Example script</label>
+              <div class="code-block" id="automationExample">Select an automation tool and port to generate a connection snippet.</div>
             </div>
           </div>
         </form>
