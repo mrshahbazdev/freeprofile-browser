@@ -36,6 +36,11 @@
       <section class="content">
         <div class="toolbar">
           <div class="count" id="profileCount">0 profiles</div>
+          <div class="batch-actions" id="batchActions" style="display:none;">
+            <label class="toggle"><input id="selectAll" type="checkbox"> Select all</label>
+            <button class="small" id="launchSelected" type="button">Launch selected</button>
+            <span class="batch-info" id="batchInfo"></span>
+          </div>
         </div>
         <div id="profilesGrid" class="profiles-grid">
           <div class="empty" id="emptyState">

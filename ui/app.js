@@ -88,7 +88,7 @@ function formatUrl(url) {
   return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
-function profileCard(p) {
+function profileCard(p, selected) {
   const proxyBadge = p.proxy
     ? `<span class="badge proxy">proxy</span>`
     : `<span class="badge dim">direct</span>`;
@@ -108,7 +108,8 @@ function profileCard(p) {
   const rectBadge = p.clientRectNoise ? `<span class="badge">rects</span>` : '';
   const screen = `${p.screenWidth || 1920} × ${p.screenHeight || 1080}`;
   return `
-    <div class="profile-card" data-id="${p.id}">
+    <div class="profile-card ${selected ? 'selected' : ''}" data-id="${p.id}">
+      <label class="profile-select"><input type="checkbox" data-select="${p.id}" ${selected ? 'checked' : ''}></label>
       <div class="profile-head">
         <div class="profile-avatar ${osAvatarClass(p.os)}">${osInitial(p.os)}</div>
         <div class="profile-title">
@@ -274,10 +275,15 @@ async function initDashboard() {
 
   let profiles = [];
   let automationActions = [];
+  const selectedIds = new Set();
   const actionBuilder = qs('#actionBuilder');
   const addActionBtn = qs('#addActionBtn');
   const generateRpaBtn = qs('#generateRpaBtn');
   const rpaCommandsInput = qs('#pRpaCommands');
+  const batchActions = qs('#batchActions');
+  const selectAllCheckbox = qs('#selectAll');
+  const launchSelectedBtn = qs('#launchSelected');
+  const batchInfo = qs('#batchInfo');
 
   function updateMacroFromActions() {
     if (automationActions.length === 0) {
@@ -387,9 +393,20 @@ async function initDashboard() {
       empty.style.display = 'block';
     } else {
       empty.style.display = 'none';
-      grid.innerHTML = filtered.map(profileCard).join('');
+      grid.innerHTML = filtered.map(p => profileCard(p, selectedIds.has(p.id))).join('');
     }
     if (countLabel) countLabel.textContent = `${profiles.length} profile${profiles.length === 1 ? '' : 's'}`;
+    updateBatchUI();
+  }
+
+  function updateBatchUI() {
+    if (!batchActions) return;
+    const hasProfiles = profiles.length > 0;
+    batchActions.style.display = hasProfiles ? 'flex' : 'none';
+    const count = selectedIds.size;
+    if (batchInfo) batchInfo.textContent = count > 0 ? `${count} selected` : '';
+    if (launchSelectedBtn) launchSelectedBtn.disabled = count === 0;
+    if (selectAllCheckbox) selectAllCheckbox.checked = count > 0 && count === profiles.length;
   }
 
   async function refresh() {
@@ -403,6 +420,15 @@ async function initDashboard() {
   }
 
   grid.onclick = async (e) => {
+    const checkbox = e.target.closest('[data-select]');
+    if (checkbox) {
+      const id = checkbox.dataset.select;
+      if (checkbox.checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      updateBatchUI();
+      render();
+      return;
+    }
     const btn = e.target.closest('button');
     if (!btn) return;
     const id = btn.dataset.id;
@@ -482,6 +508,43 @@ async function initDashboard() {
   closeBtn.onclick = closeModal;
   cancelBtn.onclick = closeModal;
   modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  if (selectAllCheckbox) {
+    selectAllCheckbox.onchange = () => {
+      if (selectAllCheckbox.checked) {
+        profiles.forEach(p => selectedIds.add(p.id));
+      } else {
+        selectedIds.clear();
+      }
+      render();
+      updateBatchUI();
+    };
+  }
+  if (launchSelectedBtn) {
+    launchSelectedBtn.onclick = async () => {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      const usedPorts = new Set();
+      for (const id of ids) {
+        const p = profiles.find(x => x.id === id);
+        if (!p) continue;
+        if (p.automationPort > 0) {
+          if (usedPorts.has(p.automationPort)) {
+            alert(`Port conflict: ${p.name} uses port ${p.automationPort} already used by another selected profile.`);
+            return;
+          }
+          usedPorts.add(p.automationPort);
+        }
+      }
+      for (const id of ids) {
+        try {
+          await send('launchProfile', { id });
+        } catch (e) {
+          console.error('launch failed', id, e);
+        }
+      }
+    };
+  }
 
   searchInput.oninput = render;
 
