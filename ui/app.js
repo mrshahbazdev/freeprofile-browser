@@ -210,6 +210,56 @@ function actionRowHTML(action, index) {
   `;
 }
 
+function parseRpaCommands(text) {
+  const actions = [];
+  const lines = (text || '').split('\n');
+  for (const line of lines) {
+    const cmd = line.trim();
+    if (!cmd) continue;
+    const lower = cmd.toLowerCase();
+
+    const openMatch = cmd.match(/^open\s+(.+)$/i);
+    if (openMatch) {
+      actions.push({ type: 'wait', target: '0', value: '', delay: 0, rpaNote: openMatch[1] });
+      continue;
+    }
+
+    const clickMatch = cmd.match(/^click\s+(.+)$/i);
+    if (clickMatch) {
+      actions.push({ type: 'click', target: clickMatch[1].trim(), value: '', delay: 0 });
+      continue;
+    }
+
+    const typeMatch = cmd.match(/^type\s+(.+?)\s+in\s+(.+)$/i) || cmd.match(/^type\s+['"]([^'"]+)['"]\s+in\s+(.+)$/i);
+    if (typeMatch) {
+      actions.push({ type: 'type', target: typeMatch[2].trim(), value: typeMatch[1], delay: 0 });
+      continue;
+    }
+
+    const scrollMatch = cmd.match(/^scroll\s+(?:down|up)?\s*(\d+)\s*(?:pixels?)?$/i);
+    if (scrollMatch) {
+      const px = parseInt(scrollMatch[1]) || 0;
+      actions.push({ type: 'scroll', target: lower.includes('up') ? String(-px) : String(px), value: '', delay: 0 });
+      continue;
+    }
+
+    const waitMatch = cmd.match(/^wait\s+(\d+(?:\.\d+)?)\s*(?:sec|seconds?|s)?$/i) || cmd.match(/^wait\s+(\d+)\s*(?:ms)?$/i);
+    if (waitMatch) {
+      let ms = parseFloat(waitMatch[1]);
+      if (!lower.includes('ms')) ms *= 1000;
+      actions.push({ type: 'wait', target: String(Math.round(ms)), value: '', delay: 0 });
+      continue;
+    }
+
+    const keyMatch = cmd.match(/^press\s+(.+)$/i) || cmd.match(/^key\s+(.+)$/i) || cmd.match(/^press\s+key\s+(.+)$/i);
+    if (keyMatch) {
+      actions.push({ type: 'keypress', target: keyMatch[1].trim(), value: '', delay: 0 });
+      continue;
+    }
+  }
+  return actions;
+}
+
 async function initDashboard() {
   const grid = qs('#profilesGrid');
   const empty = qs('#emptyState');
@@ -226,6 +276,8 @@ async function initDashboard() {
   let automationActions = [];
   const actionBuilder = qs('#actionBuilder');
   const addActionBtn = qs('#addActionBtn');
+  const generateRpaBtn = qs('#generateRpaBtn');
+  const rpaCommandsInput = qs('#pRpaCommands');
 
   function updateMacroFromActions() {
     if (automationActions.length === 0) {
@@ -316,6 +368,7 @@ async function initDashboard() {
     setChecked('#pAudioNoise', false);
     setChecked('#pClientRectNoise', false);
     setChecked('#pPluginsSpoof', true);
+    if (rpaCommandsInput) rpaCommandsInput.value = '';
     resetActionBuilder();
     updateAutomationExample();
   }
@@ -412,6 +465,18 @@ async function initDashboard() {
       automationActions.push({ type: 'click', target: '', value: '', delay: 0 });
       renderActionBuilder();
       updateMacroFromActions();
+    };
+  }
+  if (generateRpaBtn) {
+    generateRpaBtn.onclick = () => {
+      const parsed = parseRpaCommands(rpaCommandsInput ? rpaCommandsInput.value : '');
+      if (parsed.length > 0) {
+        automationActions = parsed.map(a => ({ type: a.type, target: a.target, value: a.value, delay: a.delay }));
+        const firstOpen = parsed.find(a => a.rpaNote);
+        if (firstOpen && firstOpen.rpaNote) setVal('#pUrl', firstOpen.rpaNote.trim());
+        renderActionBuilder();
+        updateMacroFromActions();
+      }
     };
   }
   closeBtn.onclick = closeModal;
