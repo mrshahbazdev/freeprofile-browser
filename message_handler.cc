@@ -53,6 +53,13 @@ std::string ProfilesToJSON(const std::vector<Profile>& profiles) {
     item->SetString("webglRenderer", p.webgl_renderer);
     item->SetString("automationTool", p.automation_tool);
     item->SetInt("automationPort", p.automation_port);
+    item->SetInt("hardwareConcurrency", p.hardware_concurrency);
+    item->SetInt("maxTouchPoints", p.max_touch_points);
+    item->SetDouble("batteryLevel", p.battery_level);
+    item->SetDouble("devicePixelRatio", p.device_pixel_ratio);
+    item->SetBool("audioNoise", p.audio_noise);
+    item->SetBool("clientRectNoise", p.client_rect_noise);
+    item->SetBool("pluginsSpoof", p.plugins_spoof);
     list->SetDictionary(list->GetSize(), item);
   }
   CefRefPtr<CefValue> value = CefValue::Create();
@@ -106,6 +113,14 @@ void LaunchChild(const std::string& exe,
   cmd += " --fp-latitude=\"" + std::to_string(p.latitude) + "\"";
   cmd += " --fp-longitude=\"" + std::to_string(p.longitude) + "\"";
   cmd += " --fp-accuracy=\"" + std::to_string(p.accuracy) + "\"";
+
+  cmd += " --fp-hardware-concurrency=\"" + std::to_string(p.hardware_concurrency) + "\"";
+  cmd += " --fp-max-touch-points=\"" + std::to_string(p.max_touch_points) + "\"";
+  cmd += " --fp-battery-level=\"" + std::to_string(p.battery_level) + "\"";
+  cmd += " --fp-device-pixel-ratio=\"" + std::to_string(p.device_pixel_ratio) + "\"";
+  cmd += " --fp-audio-noise=\"" + std::string(p.audio_noise ? "1" : "0") + "\"";
+  cmd += " --fp-client-rect-noise=\"" + std::string(p.client_rect_noise ? "1" : "0") + "\"";
+  cmd += " --fp-plugins-spoof=\"" + std::string(p.plugins_spoof ? "1" : "0") + "\"";
 
   if (p.automation_port > 0) {
     cmd += " --remote-debugging-port=" + std::to_string(p.automation_port);
@@ -181,6 +196,15 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser,
     p.webgl_renderer = data->GetString("webglRenderer").ToString();
     p.automation_tool = data->GetString("automationTool").ToString();
     p.automation_port = data->GetInt("automationPort");
+    p.hardware_concurrency = data->GetInt("hardwareConcurrency") > 0 ? data->GetInt("hardwareConcurrency") : 8;
+    p.max_touch_points = data->GetInt("maxTouchPoints") >= 0 ? data->GetInt("maxTouchPoints") : 0;
+    double battery = data->GetDouble("batteryLevel");
+    p.battery_level = (battery >= 0.0 && battery <= 1.0) ? battery : 0.85;
+    double dpr = data->GetDouble("devicePixelRatio");
+    p.device_pixel_ratio = dpr > 0.0 ? dpr : 1.0;
+    p.audio_noise = data->GetBool("audioNoise");
+    p.client_rect_noise = data->GetBool("clientRectNoise");
+    p.plugins_spoof = data->GetBool("pluginsSpoof");
     std::string id = profile_manager_->AddProfile(p);
     callback->Success(BuildAddProfileResponse(id));
     return true;

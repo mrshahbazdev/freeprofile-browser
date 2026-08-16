@@ -101,6 +101,8 @@ function profileCard(p) {
   const autoBadge = p.automationPort > 0
     ? `<span class="badge accent">port ${p.automationPort}</span>`
     : '';
+  const audioBadge = p.audioNoise ? `<span class="badge">audio</span>` : '';
+  const rectBadge = p.clientRectNoise ? `<span class="badge">rects</span>` : '';
   const screen = `${p.screenWidth || 1920} × ${p.screenHeight || 1080}`;
   return `
     <div class="profile-card" data-id="${p.id}">
@@ -118,6 +120,8 @@ function profileCard(p) {
         ${webrtcBadge}
         ${geoBadge}
         ${autoBadge}
+        ${audioBadge}
+        ${rectBadge}
       </div>
       <div class="profile-meta">
         <div>${escapeHtml(p.timezone || '')} · ${escapeHtml(p.language || 'en-US')}</div>
@@ -186,11 +190,18 @@ async function initDashboard() {
     setVal('#pWebglRenderer', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)');
     setVal('#pAutomationPort', '0');
     setVal('#pAutomationTool', 'none');
+    setVal('#pHardwareConcurrency', '8');
+    setVal('#pMaxTouchPoints', '0');
+    setVal('#pBatteryLevel', '0.85');
+    setVal('#pDevicePixelRatio', '1.0');
     setChecked('#pWebglNoise', true);
     setChecked('#pDisableWebrtc', true);
     setChecked('#pEnableGeolocation', true);
     setChecked('#pChromeSpoof', true);
     setChecked('#pCanvasNoise', false);
+    setChecked('#pAudioNoise', false);
+    setChecked('#pClientRectNoise', false);
+    setChecked('#pPluginsSpoof', true);
     updateAutomationExample();
   }
 
@@ -260,7 +271,14 @@ async function initDashboard() {
       webglVendor: val('#pWebglVendor'),
       webglRenderer: val('#pWebglRenderer'),
       automationTool: val('#pAutomationTool'),
-      automationPort: parseInt(val('#pAutomationPort')) || 0
+      automationPort: parseInt(val('#pAutomationPort')) || 0,
+      hardwareConcurrency: parseInt(val('#pHardwareConcurrency')) || 8,
+      maxTouchPoints: parseInt(val('#pMaxTouchPoints')) || 0,
+      batteryLevel: parseFloat(val('#pBatteryLevel')) || 0.85,
+      devicePixelRatio: parseFloat(val('#pDevicePixelRatio')) || 1.0,
+      audioNoise: checked('#pAudioNoise'),
+      clientRectNoise: checked('#pClientRectNoise'),
+      pluginsSpoof: checked('#pPluginsSpoof')
     };
     try {
       await send('addProfile', data);
@@ -321,7 +339,14 @@ async function initDashboard() {
         webglVendor: 'Google Inc. (NVIDIA)',
         webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)',
         automationTool: 'none',
-        automationPort: 0
+        automationPort: 0,
+        hardwareConcurrency: 8,
+        maxTouchPoints: 0,
+        batteryLevel: 0.85,
+        devicePixelRatio: 1.0,
+        audioNoise: false,
+        clientRectNoise: false,
+        pluginsSpoof: true
       });
       await refresh();
       setTimeout(() => send('repaint').catch(() => {}), 500);

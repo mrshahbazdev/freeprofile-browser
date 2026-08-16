@@ -164,6 +164,13 @@ void SimpleRenderProcessHandler::InjectFingerprint(
   double latitude = GetDoubleSwitch(cmd, "fp-latitude", 40.7128);
   double longitude = GetDoubleSwitch(cmd, "fp-longitude", -74.0060);
   double accuracy = GetDoubleSwitch(cmd, "fp-accuracy", 10.0);
+  int hardware_concurrency = GetIntSwitch(cmd, "fp-hardware-concurrency", 8);
+  int max_touch_points = GetIntSwitch(cmd, "fp-max-touch-points", 0);
+  double battery_level = GetDoubleSwitch(cmd, "fp-battery-level", 0.85);
+  double device_pixel_ratio = GetDoubleSwitch(cmd, "fp-device-pixel-ratio", 1.0);
+  bool audio_noise = GetBoolSwitch(cmd, "fp-audio-noise", false);
+  bool client_rect_noise = GetBoolSwitch(cmd, "fp-client-rect-noise", false);
+  bool plugins_spoof = GetBoolSwitch(cmd, "fp-plugins-spoof", true);
 
   std::string script = fingerprint_script_;
   Replace(script, "{{USER_AGENT}}", EscapeJS(user_agent));
@@ -183,6 +190,13 @@ void SimpleRenderProcessHandler::InjectFingerprint(
   Replace(script, "{{LATITUDE}}", std::to_string(latitude));
   Replace(script, "{{LONGITUDE}}", std::to_string(longitude));
   Replace(script, "{{ACCURACY}}", std::to_string(accuracy));
+  Replace(script, "{{HARDWARE_CONCURRENCY}}", std::to_string(hardware_concurrency));
+  Replace(script, "{{MAX_TOUCH_POINTS}}", std::to_string(max_touch_points));
+  Replace(script, "{{BATTERY_LEVEL}}", std::to_string(battery_level));
+  Replace(script, "{{DEVICE_PIXEL_RATIO}}", std::to_string(device_pixel_ratio));
+  Replace(script, "{{AUDIO_NOISE}}", audio_noise ? "true" : "false");
+  Replace(script, "{{CLIENT_RECT_NOISE}}", client_rect_noise ? "true" : "false");
+  Replace(script, "{{PLUGINS_SPOOF}}", plugins_spoof ? "true" : "false");
   Replace(script, "{{SEED}}", std::to_string(SeedFromString(profile_id)));
 
   CefRefPtr<CefV8Value> retval;

@@ -39,6 +39,16 @@ void ReadProfileFromDict(CefRefPtr<CefDictionaryValue> item, Profile* p) {
   p->automation_tool = item->GetString("automationTool").ToString();
   int port = item->GetInt("automationPort");
   p->automation_port = port >= 0 ? port : 0;
+
+  p->hardware_concurrency = item->GetInt("hardwareConcurrency") > 0 ? item->GetInt("hardwareConcurrency") : 8;
+  p->max_touch_points = item->GetInt("maxTouchPoints") >= 0 ? item->GetInt("maxTouchPoints") : 0;
+  double battery = item->GetDouble("batteryLevel");
+  p->battery_level = (battery >= 0.0 && battery <= 1.0) ? battery : 0.85;
+  double dpr = item->GetDouble("devicePixelRatio");
+  p->device_pixel_ratio = dpr > 0.0 ? dpr : 1.0;
+  p->audio_noise = item->GetBool("audioNoise");
+  p->client_rect_noise = item->GetBool("clientRectNoise");
+  p->plugins_spoof = item->HasKey("pluginsSpoof") ? item->GetBool("pluginsSpoof") : true;
 }
 
 CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
@@ -66,6 +76,13 @@ CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
   item->SetString("webglRenderer", p.webgl_renderer);
   item->SetString("automationTool", p.automation_tool);
   item->SetInt("automationPort", p.automation_port);
+  item->SetInt("hardwareConcurrency", p.hardware_concurrency);
+  item->SetInt("maxTouchPoints", p.max_touch_points);
+  item->SetDouble("batteryLevel", p.battery_level);
+  item->SetDouble("devicePixelRatio", p.device_pixel_ratio);
+  item->SetBool("audioNoise", p.audio_noise);
+  item->SetBool("clientRectNoise", p.client_rect_noise);
+  item->SetBool("pluginsSpoof", p.plugins_spoof);
   return item;
 }
 

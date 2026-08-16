@@ -35,6 +35,15 @@ struct Profile {
   // Automation integration.
   std::string automation_tool = "none";
   int automation_port = 0;
+
+  // Deeper anti-detect fields.
+  int hardware_concurrency = 8;
+  int max_touch_points = 0;
+  double battery_level = 0.85;
+  double device_pixel_ratio = 1.0;
+  bool audio_noise = false;
+  bool client_rect_noise = false;
+  bool plugins_spoof = true;
 };
 
 class ProfileManager {

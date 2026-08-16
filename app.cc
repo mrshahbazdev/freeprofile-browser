@@ -130,6 +130,13 @@ void PropagateFingerprintSwitches(CefRefPtr<CefCommandLine> from,
       "fp-latitude",
       "fp-longitude",
       "fp-accuracy",
+      "fp-hardware-concurrency",
+      "fp-max-touch-points",
+      "fp-battery-level",
+      "fp-device-pixel-ratio",
+      "fp-audio-noise",
+      "fp-client-rect-noise",
+      "fp-plugins-spoof",
       "user-agent",
   };
   for (const char* sw : kSwitches) {

@@ -55,8 +55,21 @@
       notification: typeof Notification !== 'undefined' ? Notification.permission : 'n/a',
       performanceMemory: typeof performance !== 'undefined' && performance.memory ? performance.memory.jsHeapSizeLimit : 'n/a',
       webglVendor: gl ? gl.getParameter(0x9245) : 'n/a',
-      webglRenderer: gl ? gl.getParameter(0x9246) : 'n/a'
+      webglRenderer: gl ? gl.getParameter(0x9246) : 'n/a',
+      battery: typeof navigator.getBattery === 'function' ? 'getBattery exists' : 'n/a'
     };
+    data.rects = (function() {
+      const div = document.createElement('div');
+      div.style.width = '100px'; div.style.height = '50px';
+      document.body.appendChild(div);
+      const r = div.getBoundingClientRect();
+      document.body.removeChild(div);
+      return { width: r.width, height: r.height };
+    })();
+    if (typeof navigator.getBattery === 'function') {
+      navigator.getBattery().then(b => { data.batteryLevel = b.level; print(); });
+    }
+    function print() { document.getElementById('out').textContent = JSON.stringify(data, null, 2); }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
         data.geoCoords = {
@@ -69,8 +82,9 @@
         document.getElementById('out').textContent = JSON.stringify(data, null, 2);
       });
     } else {
-      document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      print();
     }
+    setTimeout(print, 500);
   </script>
 </body>
 </html>

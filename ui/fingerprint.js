@@ -12,10 +12,11 @@
     screenHeight: {{SCREEN_HEIGHT}},
     colorDepth: 24,
     pixelDepth: 24,
-    devicePixelRatio: 1,
+    devicePixelRatio: {{DEVICE_PIXEL_RATIO}},
     deviceMemory: {{DEVICE_MEMORY}},
-    hardwareConcurrency: 8,
-    maxTouchPoints: 0,
+    hardwareConcurrency: {{HARDWARE_CONCURRENCY}},
+    maxTouchPoints: {{MAX_TOUCH_POINTS}},
+    batteryLevel: {{BATTERY_LEVEL}},
     canvasNoise: {{CANVAS_NOISE}},
     webglNoise: {{WEBGL_NOISE}},
     webglVendor: "{{WEBGL_VENDOR}}",
@@ -23,6 +24,9 @@
     disableWebrtc: {{DISABLE_WEBRTC}},
     enableGeolocation: {{ENABLE_GEOLOCATION}},
     chromeSpoof: {{CHROME_SPOOF}},
+    audioNoise: {{AUDIO_NOISE}},
+    clientRectNoise: {{CLIENT_RECT_NOISE}},
+    pluginsSpoof: {{PLUGINS_SPOOF}},
     latitude: {{LATITUDE}},
     longitude: {{LONGITUDE}},
     accuracy: {{ACCURACY}},
@@ -95,6 +99,11 @@
     return (h ^ (h >>> 16)) >>> 0;
   }
 
+  function noiseValue(seed, x, y, ch) {
+    let v = randomInt(seed + x * 374761393 + y * 668265263 + ch);
+    return (v % 5) - 2;
+  }
+
   // Navigator basics
   define(navigator, 'userAgent', () => cfg.userAgent);
   define(navigator, 'platform', () => cfg.platform);
@@ -110,8 +119,25 @@
   defineConst(navigator, 'deviceMemory', cfg.deviceMemory);
   defineConst(navigator, 'pdfViewerEnabled', true);
   define(navigator, 'doNotTrack', () => null);
+  define(navigator, 'oscpu', () => cfg.platform === 'Win32' ? 'Windows NT 10.0; Win64; x64' : cfg.platform);
 
-  // Screen
+  // Battery
+  if ('getBattery' in navigator) {
+    navigator.getBattery = function() {
+      const level = cfg.batteryLevel;
+      return Promise.resolve({
+        charging: level < 1,
+        chargingTime: level < 1 ? 3600 : 0,
+        dischargingTime: Infinity,
+        level: level,
+        addEventListener: function(){},
+        removeEventListener: function(){},
+        dispatchEvent: function(){ return true; }
+      });
+    };
+  }
+
+  // Screen / window dimensions
   define(window, 'devicePixelRatio', () => cfg.devicePixelRatio);
   define(window, 'outerWidth', () => cfg.screenWidth);
   define(window, 'outerHeight', () => cfg.screenHeight);
@@ -128,32 +154,34 @@
   define(screen, 'orientation', () => ({ angle: 0, type: 'landscape-primary' }));
 
   // Plugins / mimeTypes
-  function FakePlugins() {
-    this.length = 3;
-    this[0] = { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format', version: undefined, itemType: 'type' };
-    this[1] = { name: 'Widevine Content Decryption Module', filename: 'widevinecdmadapter.dll', description: 'Protected media decoder', version: undefined, itemType: 'type' };
-    this[2] = { name: 'Native Client module', filename: 'internal-nacl-plugin', description: 'Native Client module', version: undefined, itemType: 'type' };
-  }
-  FakePlugins.prototype.item = function(index) { return this[index] || null; };
-  FakePlugins.prototype.namedItem = function(name) {
-    for (let i = 0; i < this.length; ++i) if (this[i].name === name) return this[i];
-    return null;
-  };
-  FakePlugins.prototype.refresh = function() {};
+  if (cfg.pluginsSpoof) {
+    function FakePlugins() {
+      this.length = 3;
+      this[0] = { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format', version: undefined, itemType: 'type' };
+      this[1] = { name: 'Widevine Content Decryption Module', filename: 'widevinecdmadapter.dll', description: 'Protected media decoder', version: undefined, itemType: 'type' };
+      this[2] = { name: 'Native Client module', filename: 'internal-nacl-plugin', description: 'Native Client module', version: undefined, itemType: 'type' };
+    }
+    FakePlugins.prototype.item = function(index) { return this[index] || null; };
+    FakePlugins.prototype.namedItem = function(name) {
+      for (let i = 0; i < this.length; ++i) if (this[i].name === name) return this[i];
+      return null;
+    };
+    FakePlugins.prototype.refresh = function() {};
 
-  function FakeMimeTypes() {
-    this.length = 2;
-    this[0] = { type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format', enabledPlugin: this[0] };
-    this[1] = { type: 'application/x-google-chrome-pdf', suffixes: 'pdf', description: 'Portable Document Format', enabledPlugin: this[0] };
-  }
-  FakeMimeTypes.prototype.item = function(index) { return this[index] || null; };
-  FakeMimeTypes.prototype.namedItem = function(name) {
-    for (let i = 0; i < this.length; ++i) if (this[i].type === name) return this[i];
-    return null;
-  };
+    function FakeMimeTypes() {
+      this.length = 2;
+      this[0] = { type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format', enabledPlugin: this[0] };
+      this[1] = { type: 'application/x-google-chrome-pdf', suffixes: 'pdf', description: 'Portable Document Format', enabledPlugin: this[0] };
+    }
+    FakeMimeTypes.prototype.item = function(index) { return this[index] || null; };
+    FakeMimeTypes.prototype.namedItem = function(name) {
+      for (let i = 0; i < this.length; ++i) if (this[i].type === name) return this[i];
+      return null;
+    };
 
-  define(navigator, 'plugins', () => new FakePlugins());
-  define(navigator, 'mimeTypes', () => new FakeMimeTypes());
+    define(navigator, 'plugins', () => new FakePlugins());
+    define(navigator, 'mimeTypes', () => new FakeMimeTypes());
+  }
 
   // Fonts
   function FakeFontFace() {}
@@ -235,9 +263,9 @@
       for (let y = 0; y < height; ++y) {
         for (let x = 0; x < width; ++x) {
           const i = (y * width + x) * 4;
-          data[i]   = Math.max(0, Math.min(255, data[i]   + ((seed + x * 374761393 + y * 668265263 + 1) % 5) - 2));
-          data[i+1] = Math.max(0, Math.min(255, data[i+1] + ((seed + x * 374761393 + y * 668265263 + 2) % 5) - 2));
-          data[i+2] = Math.max(0, Math.min(255, data[i+2] + ((seed + x * 374761393 + y * 668265263 + 3) % 5) - 2));
+          data[i]   = Math.max(0, Math.min(255, data[i]   + noiseValue(seed, x, y, 1)));
+          data[i+1] = Math.max(0, Math.min(255, data[i+1] + noiseValue(seed, x, y, 2)));
+          data[i+2] = Math.max(0, Math.min(255, data[i+2] + noiseValue(seed, x, y, 3)));
         }
       }
       return data;
@@ -251,7 +279,7 @@
     const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
     const origToBlob = HTMLCanvasElement.prototype.toBlob;
 
-    function cloneCanvasWithNoise(canvas, type, quality) {
+    function cloneCanvasWithNoise(canvas) {
       const w = canvas.width;
       const h = canvas.height;
       const tmp = document.createElement('canvas');
@@ -267,13 +295,13 @@
     }
 
     HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
-      const tmp = cloneCanvasWithNoise(this, type, quality);
+      const tmp = cloneCanvasWithNoise(this);
       if (!tmp) return origToDataURL.call(this, type, quality);
       return origToDataURL.call(tmp, type, quality);
     };
 
     HTMLCanvasElement.prototype.toBlob = function(callback, type, quality) {
-      const tmp = cloneCanvasWithNoise(this, type, quality);
+      const tmp = cloneCanvasWithNoise(this);
       if (!tmp) return origToBlob.call(this, callback, type, quality);
       return origToBlob.call(tmp, callback, type, quality);
     };
@@ -287,13 +315,75 @@
     const GL_SHADING_LANGUAGE_VERSION = 0x8B8C;
     const UNMASKED_VENDOR = 0x9245;
     const UNMASKED_RENDERER = 0x9246;
-    const origGetParameter = WebGLRenderingContext.prototype.getParameter;
-    WebGLRenderingContext.prototype.getParameter = function(pname) {
-      if (pname === UNMASKED_VENDOR || pname === GL_VENDOR) return cfg.webglVendor;
-      if (pname === UNMASKED_RENDERER || pname === GL_RENDERER) return cfg.webglRenderer;
-      if (pname === GL_VERSION) return 'WebGL 1.0 (OpenGL ES 2.0 Chromium)';
-      if (pname === GL_SHADING_LANGUAGE_VERSION) return 'WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)';
-      return origGetParameter.call(this, pname);
+    const contexts = [WebGLRenderingContext, WebGL2RenderingContext];
+    contexts.forEach(ctor => {
+      if (!ctor) return;
+      const origGetParameter = ctor.prototype.getParameter;
+      ctor.prototype.getParameter = function(pname) {
+        if (pname === UNMASKED_VENDOR || pname === GL_VENDOR) return cfg.webglVendor;
+        if (pname === UNMASKED_RENDERER || pname === GL_RENDERER) return cfg.webglRenderer;
+        if (pname === GL_VERSION) return 'WebGL 1.0 (OpenGL ES 2.0 Chromium)';
+        if (pname === GL_SHADING_LANGUAGE_VERSION) return 'WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)';
+        return origGetParameter.call(this, pname);
+      };
+    });
+  }
+
+  // AudioContext spoof
+  if (cfg.audioNoise) {
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtor) {
+      const origCreateScriptProcessor = AudioCtor.prototype.createScriptProcessor;
+      AudioCtor.prototype.createScriptProcessor = function(bufferSize, numberOfInputChannels, numberOfOutputChannels) {
+        const node = origCreateScriptProcessor.call(this, bufferSize, numberOfInputChannels, numberOfOutputChannels);
+        const origGetChannelData = AudioBuffer.prototype.getChannelData;
+        AudioBuffer.prototype.getChannelData = function(channel) {
+          const data = origGetChannelData.call(this, channel);
+          for (let i = 0; i < data.length; ++i) {
+            const n = (noiseValue(cfg.seed, i, channel, 7) / 1000);
+            if (Math.abs(n) > 0.0005) data[i] += n;
+          }
+          return data;
+        };
+        return node;
+      };
+      // common sample rate is 44100; overriding constructor options is not reliable everywhere.
+    }
+  }
+
+  // Client rects noise
+  if (cfg.clientRectNoise) {
+    function noisyRect(rect) {
+      const r = {};
+      ['x','y','width','height','top','left','bottom','right'].forEach(k => {
+        r[k] = rect[k] + (Math.random() * 0.02 - 0.01);
+      });
+      return r;
+    }
+    const origGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function() {
+      const rect = origGetBoundingClientRect.call(this);
+      return noisyRect(rect);
+    };
+    const origGetClientRects = Element.prototype.getClientRects;
+    Element.prototype.getClientRects = function() {
+      const list = origGetClientRects.call(this);
+      const out = [];
+      for (let i = 0; i < list.length; ++i) {
+        out.push(noisyRect(list[i]));
+      }
+      return out;
+    };
+    const rangeGetRect = Range.prototype.getBoundingClientRect;
+    Range.prototype.getBoundingClientRect = function() {
+      return noisyRect(rangeGetRect.call(this));
+    };
+    const rangeGetClientRects = Range.prototype.getClientRects;
+    Range.prototype.getClientRects = function() {
+      const list = rangeGetClientRects.call(this);
+      const out = [];
+      for (let i = 0; i < list.length; ++i) out.push(noisyRect(list[i]));
+      return out;
     };
   }
 
@@ -420,7 +510,7 @@
   }
 
   // Hide inconsistent hardware APIs
-  const hideApis = ['bluetooth','usb','hid','serial','keyboard','presentation','wakeLock','windowControlsOverlay','xr','scheduling','contacts','managed'];
+  const hideApis = ['bluetooth','usb','hid','serial','keyboard','presentation','wakeLock','windowControlsOverlay','xr','scheduling','contacts','managed','mediaCapabilities'];
   hideApis.forEach(api => {
     if (navigator[api] !== undefined) {
       try { delete navigator[api]; } catch (e) {}

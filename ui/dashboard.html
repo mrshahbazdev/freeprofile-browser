@@ -137,6 +137,26 @@
                 <label>GPS accuracy (m)</label>
                 <input id="pAccuracy" type="number" step="any" value="10">
               </div>
+              <div class="form-group">
+                <label>Device pixel ratio</label>
+                <input id="pDevicePixelRatio" type="number" step="any" value="1.0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Hardware concurrency</label>
+                <input id="pHardwareConcurrency" type="number" value="8">
+              </div>
+              <div class="form-group">
+                <label>Max touch points</label>
+                <input id="pMaxTouchPoints" type="number" value="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Battery level</label>
+                <input id="pBatteryLevel" type="number" step="0.01" min="0" max="1" value="0.85">
+              </div>
             </div>
             <div class="toggle-row">
               <label class="toggle"><input id="pCanvasNoise" type="checkbox"> Canvas noise</label>
@@ -144,6 +164,9 @@
               <label class="toggle"><input id="pDisableWebrtc" type="checkbox" checked> Disable WebRTC</label>
               <label class="toggle"><input id="pEnableGeolocation" type="checkbox" checked> Spoof geolocation</label>
               <label class="toggle"><input id="pChromeSpoof" type="checkbox" checked> Chrome object</label>
+              <label class="toggle"><input id="pAudioNoise" type="checkbox"> Audio noise</label>
+              <label class="toggle"><input id="pClientRectNoise" type="checkbox"> Client rect noise</label>
+              <label class="toggle"><input id="pPluginsSpoof" type="checkbox" checked> Spoof plugins</label>
             </div>
           </div>
 
