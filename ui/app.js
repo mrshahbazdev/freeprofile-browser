@@ -146,7 +146,18 @@ function automationExample(tool, port) {
   if (tool === 'puppeteer' || tool === 'playwright') {
     return `const browser = await ${tool}.launch({\n  wsEndpoint: 'ws://127.0.0.1:${port}/devtools/browser/<id>'\n});`;
   }
-  return `driver = webdriver.Chrome(options)\n# connect to http://127.0.0.1:${port} if using remote-debugging-port with ChromeDriver`;
+  if (tool === 'selenium') {
+    return `# First launch the profile with remote debugging port ${port}
+# Then attach with Selenium:
+from selenium import webdriver
+options = webdriver.ChromeOptions()
+options.debugger_address = '127.0.0.1:${port}'
+driver = webdriver.Chrome(options=options)
+# driver.get('https://example.com')
+# element = driver.find_element('css selector', 'input')
+# element.send_keys('hello')`;
+  }
+  return 'Select an automation tool and port to generate a connection snippet.';
 }
 
 function updateAutomationExample() {
@@ -377,6 +388,16 @@ async function initDashboard() {
         const netTab = qs('.tab[data-tab="network"]');
         if (netTab) netTab.click();
       }
+      const params = new URLSearchParams(location.search);
+      const autoTool = params.get('automationTool');
+      const autoPort = params.get('automationPort');
+      if (autoTool) {
+        setVal('#pAutomationTool', autoTool);
+      }
+      if (autoPort) {
+        setVal('#pAutomationPort', autoPort);
+      }
+      updateAutomationExample();
       setTimeout(() => send('repaint').catch(() => {}), 300);
     }, 600);
   }
