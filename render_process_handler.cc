@@ -209,7 +209,7 @@ void SimpleRenderProcessHandler::InjectFingerprint(
     if (!automation_script.empty()) {
       std::string wrapped =
           "(function(){"
-          "function __fp_automation_run__(){\n" + automation_script + "\n}"
+          "async function __fp_automation_run__(){\n" + automation_script + "\n}"
           "if(document.readyState==='complete'||document.readyState==='interactive'){"
           "setTimeout(__fp_automation_run__,0);"
           "}else{"

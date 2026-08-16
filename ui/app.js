@@ -167,6 +167,49 @@ function updateAutomationExample() {
   if (el) el.textContent = automationExample(tool, port);
 }
 
+function generateAutomationMacro(actions) {
+  const helpers = [
+    "function __fp_click(sel){var el=document.querySelector(sel);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.click();}}",
+    "function __fp_type(sel,text){var el=document.querySelector(sel);if(!el)return;el.focus();el.value=text;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}",
+    "function __fp_scroll(px){window.scrollBy({top:parseInt(px)||0,behavior:'smooth'});}",
+    "function __fp_key(key){document.dispatchEvent(new KeyboardEvent('keydown',{key:key,bubbles:true}));document.dispatchEvent(new KeyboardEvent('keyup',{key:key,bubbles:true}));}",
+    "async function __fp_wait(ms){await new Promise(r=>setTimeout(r,parseInt(ms)||0));}"
+  ].join('\n');
+  const lines = [helpers];
+  for (const a of actions) {
+    const delay = parseInt(a.delay) || 0;
+    if (delay > 0) lines.push(`await __fp_wait(${delay});`);
+    const t = JSON.stringify(a.target || '');
+    const v = JSON.stringify(a.value || '');
+    switch (a.type) {
+      case 'click': lines.push(`__fp_click(${t});`); break;
+      case 'type': lines.push(`__fp_type(${t},${v});`); break;
+      case 'scroll': lines.push(`__fp_scroll(${t});`); break;
+      case 'keypress': lines.push(`__fp_key(${t});`); break;
+      case 'wait': lines.push(`await __fp_wait(${t});`); break;
+    }
+  }
+  return lines.join('\n');
+}
+
+function actionRowHTML(action, index) {
+  return `
+    <div class="action-row" data-index="${index}">
+      <select class="action-type">
+        <option value="click" ${action.type === 'click' ? 'selected' : ''}>Click</option>
+        <option value="type" ${action.type === 'type' ? 'selected' : ''}>Type</option>
+        <option value="scroll" ${action.type === 'scroll' ? 'selected' : ''}>Scroll</option>
+        <option value="keypress" ${action.type === 'keypress' ? 'selected' : ''}>Key press</option>
+        <option value="wait" ${action.type === 'wait' ? 'selected' : ''}>Wait</option>
+      </select>
+      <input class="action-target" placeholder="${action.type === 'scroll' || action.type === 'wait' ? 'ms/pixels' : (action.type === 'keypress' ? 'key' : 'selector')}" value="${escapeHtml(action.target || '')}">
+      <input class="action-value" placeholder="text" value="${escapeHtml(action.value || '')}" ${action.type === 'type' ? '' : 'disabled'}>
+      <input class="action-delay" type="number" placeholder="delay ms" value="${action.delay || 0}" min="0">
+      <button type="button" class="removeAction" title="Remove">×</button>
+    </div>
+  `;
+}
+
 async function initDashboard() {
   const grid = qs('#profilesGrid');
   const empty = qs('#emptyState');
@@ -180,6 +223,61 @@ async function initDashboard() {
   const tabs = qsa('.tab');
 
   let profiles = [];
+  let automationActions = [];
+  const actionBuilder = qs('#actionBuilder');
+  const addActionBtn = qs('#addActionBtn');
+
+  function updateMacroFromActions() {
+    if (automationActions.length === 0) {
+      setVal('#pAutomationScript', '');
+      return;
+    }
+    setVal('#pAutomationScript', generateAutomationMacro(automationActions));
+  }
+
+  function attachActionListeners() {
+    qsa('#actionBuilder .action-row').forEach((row, i) => {
+      const typeSel = row.querySelector('.action-type');
+      const targetInput = row.querySelector('.action-target');
+      const valueInput = row.querySelector('.action-value');
+      const delayInput = row.querySelector('.action-delay');
+      const removeBtn = row.querySelector('.removeAction');
+      if (typeSel) typeSel.onchange = (e) => {
+        automationActions[i].type = e.target.value;
+        renderActionBuilder();
+        updateMacroFromActions();
+      };
+      if (targetInput) targetInput.oninput = (e) => {
+        automationActions[i].target = e.target.value;
+        updateMacroFromActions();
+      };
+      if (valueInput) valueInput.oninput = (e) => {
+        automationActions[i].value = e.target.value;
+        updateMacroFromActions();
+      };
+      if (delayInput) delayInput.oninput = (e) => {
+        automationActions[i].delay = parseInt(e.target.value) || 0;
+        updateMacroFromActions();
+      };
+      if (removeBtn) removeBtn.onclick = () => {
+        automationActions.splice(i, 1);
+        renderActionBuilder();
+        updateMacroFromActions();
+      };
+    });
+  }
+
+  function renderActionBuilder() {
+    if (!actionBuilder) return;
+    actionBuilder.innerHTML = automationActions.map(actionRowHTML).join('');
+    attachActionListeners();
+  }
+
+  function resetActionBuilder() {
+    automationActions = [];
+    renderActionBuilder();
+    updateMacroFromActions();
+  }
 
   function openModal() {
     modal.classList.add('open');
@@ -218,6 +316,7 @@ async function initDashboard() {
     setChecked('#pAudioNoise', false);
     setChecked('#pClientRectNoise', false);
     setChecked('#pPluginsSpoof', true);
+    resetActionBuilder();
     updateAutomationExample();
   }
 
@@ -308,6 +407,13 @@ async function initDashboard() {
   };
 
   newBtn.onclick = openModal;
+  if (addActionBtn) {
+    addActionBtn.onclick = () => {
+      automationActions.push({ type: 'click', target: '', value: '', delay: 0 });
+      renderActionBuilder();
+      updateMacroFromActions();
+    };
+  }
   closeBtn.onclick = closeModal;
   cancelBtn.onclick = closeModal;
   modal.onclick = (e) => { if (e.target === modal) closeModal(); };
