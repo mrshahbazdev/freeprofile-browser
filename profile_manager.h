@@ -44,6 +44,9 @@ struct Profile {
   bool audio_noise = false;
   bool client_rect_noise = false;
   bool plugins_spoof = true;
+
+  // Inline JS automation macro executed in child browser pages.
+  std::string automation_script;
 };
 
 class ProfileManager {

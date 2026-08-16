@@ -137,6 +137,7 @@ void PropagateFingerprintSwitches(CefRefPtr<CefCommandLine> from,
       "fp-audio-noise",
       "fp-client-rect-noise",
       "fp-plugins-spoof",
+      "fp-automation-file",
       "user-agent",
   };
   for (const char* sw : kSwitches) {

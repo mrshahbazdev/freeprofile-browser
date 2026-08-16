@@ -1,6 +1,8 @@
 #include "message_handler.h"
 
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 
 #if defined(OS_WIN)
 #include <windows.h>
@@ -60,6 +62,7 @@ std::string ProfilesToJSON(const std::vector<Profile>& profiles) {
     item->SetBool("audioNoise", p.audio_noise);
     item->SetBool("clientRectNoise", p.client_rect_noise);
     item->SetBool("pluginsSpoof", p.plugins_spoof);
+    item->SetString("automationScript", p.automation_script);
     list->SetDictionary(list->GetSize(), item);
   }
   CefRefPtr<CefValue> value = CefValue::Create();
@@ -86,6 +89,18 @@ void LaunchChild(const std::string& exe,
                  const std::string& data_dir) {
   std::string cmd = "\"" + exe + "\"";
   std::string profile_dir = data_dir + "/profiles/" + p.id;
+  std::filesystem::create_directories(profile_dir);
+
+  if (!p.automation_script.empty()) {
+    std::string script_path = profile_dir + "/automation.js";
+    std::ofstream af(script_path);
+    if (af.is_open()) {
+      af << p.automation_script;
+      af.close();
+    }
+    cmd += " --fp-automation-file=\"" + script_path + "\"";
+  }
+
   cmd += " --profile-dir=\"" + profile_dir + "\"";
   if (!p.proxy.empty()) {
     cmd += " --proxy=\"" + p.proxy + "\"";
@@ -205,6 +220,7 @@ bool MessageHandler::OnQuery(CefRefPtr<CefBrowser> browser,
     p.audio_noise = data->GetBool("audioNoise");
     p.client_rect_noise = data->GetBool("clientRectNoise");
     p.plugins_spoof = data->GetBool("pluginsSpoof");
+    p.automation_script = data->GetString("automationScript").ToString();
     std::string id = profile_manager_->AddProfile(p);
     callback->Success(BuildAddProfileResponse(id));
     return true;

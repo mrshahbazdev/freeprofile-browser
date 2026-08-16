@@ -101,6 +101,9 @@ function profileCard(p) {
   const autoBadge = p.automationPort > 0
     ? `<span class="badge accent">port ${p.automationPort}</span>`
     : '';
+  const macroBadge = p.automationScript
+    ? `<span class="badge">macro</span>`
+    : '';
   const audioBadge = p.audioNoise ? `<span class="badge">audio</span>` : '';
   const rectBadge = p.clientRectNoise ? `<span class="badge">rects</span>` : '';
   const screen = `${p.screenWidth || 1920} × ${p.screenHeight || 1080}`;
@@ -120,6 +123,7 @@ function profileCard(p) {
         ${webrtcBadge}
         ${geoBadge}
         ${autoBadge}
+        ${macroBadge}
         ${audioBadge}
         ${rectBadge}
       </div>
@@ -190,6 +194,7 @@ async function initDashboard() {
     setVal('#pWebglRenderer', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)');
     setVal('#pAutomationPort', '0');
     setVal('#pAutomationTool', 'none');
+    setVal('#pAutomationScript', '');
     setVal('#pHardwareConcurrency', '8');
     setVal('#pMaxTouchPoints', '0');
     setVal('#pBatteryLevel', '0.85');
@@ -272,6 +277,7 @@ async function initDashboard() {
       webglRenderer: val('#pWebglRenderer'),
       automationTool: val('#pAutomationTool'),
       automationPort: parseInt(val('#pAutomationPort')) || 0,
+      automationScript: val('#pAutomationScript'),
       hardwareConcurrency: parseInt(val('#pHardwareConcurrency')) || 8,
       maxTouchPoints: parseInt(val('#pMaxTouchPoints')) || 0,
       batteryLevel: parseFloat(val('#pBatteryLevel')) || 0.85,
@@ -340,6 +346,7 @@ async function initDashboard() {
         webglRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)',
         automationTool: 'none',
         automationPort: 0,
+        automationScript: '',
         hardwareConcurrency: 8,
         maxTouchPoints: 0,
         batteryLevel: 0.85,

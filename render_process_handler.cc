@@ -202,6 +202,23 @@ void SimpleRenderProcessHandler::InjectFingerprint(
   CefRefPtr<CefV8Value> retval;
   CefRefPtr<CefV8Exception> exception;
   context->Eval(script, "", 0, retval, exception);
+
+  std::string automation_file = GetSwitch(cmd, "fp-automation-file", "");
+  if (!automation_file.empty()) {
+    std::string automation_script = ReadFile(automation_file);
+    if (!automation_script.empty()) {
+      std::string wrapped =
+          "(function(){"
+          "function __fp_automation_run__(){\n" + automation_script + "\n}"
+          "if(document.readyState==='complete'||document.readyState==='interactive'){"
+          "setTimeout(__fp_automation_run__,0);"
+          "}else{"
+          "document.addEventListener('DOMContentLoaded',__fp_automation_run__);"
+          "}"
+          "})();";
+      context->Eval(wrapped, "", 0, retval, exception);
+    }
+  }
 }
 
 void SimpleRenderProcessHandler::OnContextReleased(

@@ -49,6 +49,7 @@ void ReadProfileFromDict(CefRefPtr<CefDictionaryValue> item, Profile* p) {
   p->audio_noise = item->GetBool("audioNoise");
   p->client_rect_noise = item->GetBool("clientRectNoise");
   p->plugins_spoof = item->HasKey("pluginsSpoof") ? item->GetBool("pluginsSpoof") : true;
+  p->automation_script = item->GetString("automationScript").ToString();
 }
 
 CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
@@ -83,6 +84,7 @@ CefRefPtr<CefDictionaryValue> WriteProfileToDict(const Profile& p) {
   item->SetBool("audioNoise", p.audio_noise);
   item->SetBool("clientRectNoise", p.client_rect_noise);
   item->SetBool("pluginsSpoof", p.plugins_spoof);
+  item->SetString("automationScript", p.automation_script);
   return item;
 }
 
